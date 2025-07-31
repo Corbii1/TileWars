@@ -36,9 +36,3 @@ CS 375 Project
 ## Winning the Game
 - Last team standing on the board wins.
 - Use strategy, speed, and sabotage to dominate the grid.
-
-## Tips for Success
-- Don’t isolate yourself - stay connected to your team’s tiles.
-- Cut off enemy paths to force eliminations.
-- Save tiles for critical moments—patience wins games.
-- Use sabotages wisely if your team is eliminated.
