@@ -1,0 +1,54 @@
+.cell {
+    width: 10px;
+    height: 10px;
+    display: inline-block;
+    border: 1px solid #ccc;
+    background-color: #fff;
+}
+
+.row {
+    display: flex;
+}
+
+.grid-container {
+    margin: auto;
+    width: fit-content;
+}
+
+.cell.red{
+    background-color: red;
+}
+.cell.green{
+    background-color: green;
+}
+.cell.blue{
+    background-color: blue;
+}
+.cell.yellow{
+    background-color: yellow;
+}
+
+h1 {
+    text-align: center;
+    font-family: Arial, sans-serif;
+}
+
+.cell.highlight {
+
+    animation: highlight-animation 1s infinite;
+}
+@keyframes highlight-animation {
+    0% {
+        background-color: #f0f0f0;
+    }
+    50% {
+        background-color: #d0d0d0;
+    }
+    100% {
+        background-color: #f0f0f0;
+    }
+}
+
+.cell.current {
+    border: 1px solid black;
+}
