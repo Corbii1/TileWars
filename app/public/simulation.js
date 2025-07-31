@@ -1,6 +1,4 @@
 var grid = document.getElementById('grid');
-
-
 var teams = [{ team: 'red', home: [0, 0] }, { team: 'blue', home: [0, 49] }, { team: 'green', home: [49, 0] }, { team: 'yellow', home: [49, 49] }];
 let gridSize = 50;
 for (let i = 0; i < gridSize; i++) {
@@ -33,13 +31,10 @@ let connectedCells = [
   {group : 2, color: 'green', cells: []},
   {group : 3, color: 'yellow', cells: []}
 ];
+
 function updateConnectedCells() {
-
-
   console.log('Connected Cells:', connectedCells);
 }
-
-
 
 document.addEventListener('keypress', (event) => {
   switch (event.key) {
@@ -157,4 +152,22 @@ function move(direction) {
     currentCell.classList.add('current');
 
   }
+}
+
+const socket = new WebSocket('ws://localhost:8080');
+
+socket.onopen = function(event) {
+  // Handle connection open
+};
+
+socket.onmessage = function(event) {
+  // Handle received message
+};
+
+socket.onclose = function(event) {
+  // Handle connection close
+};
+
+function sendMessage(message) {
+  socket.send(message);
 }
