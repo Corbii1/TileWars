@@ -1,8 +1,40 @@
+const socket = new WebSocket('ws://localhost:8080');
+
+socket.onopen = function(event) {
+  // Handle connection open
+};
+
+socket.onmessage = function(event) {
+  const msg = JSON.parse(event.data);
+  if (msg.type === 'grid') {
+    const gridData = msg.data;
+
+    for (let cell of gridData) {
+      let domCell = gridArray[cell.x][cell.y];
+      domCell.className = 'cell';
+      if (cell.color) {
+        domCell.classList.add(cell.color);
+      }
+    }
+  }
+};
+
+socket.onclose = function(event) {
+  // Handle connection close
+};
+
+function sendMessage(message) {
+  socket.send(message);
+}
+
 var grid = document.getElementById('grid');
-
-
-var teams = [{ team: 'red', home: [0, 0] }, { team: 'blue', home: [0, 49] }, { team: 'green', home: [49, 0] }, { team: 'yellow', home: [49, 49] }];
 let gridSize = 50;
+var teams = [
+  { team: 'red', home: [0, 0] }, 
+  { team: 'blue', home: [0, 49] }, 
+  { team: 'green', home: [49, 0] }, 
+  { team: 'yellow', home: [49, 49] }
+];
 for (let i = 0; i < gridSize; i++) {
   let row = document.createElement('div');
   row.className = 'row';
@@ -16,11 +48,6 @@ for (let i = 0; i < gridSize; i++) {
   grid.appendChild(row);
 }
 let gridArray = Array.from(grid.children).map(row => Array.from(row.children));
-//intialize grid with teams in each corner
-gridArray[teams[0].home[0]][teams[0].home[1]].classList.add('red');
-gridArray[teams[1].home[0]][teams[1].home[1]].classList.add('blue');
-gridArray[teams[2].home[0]][teams[2].home[1]].classList.add('green');
-gridArray[teams[3].home[0]][teams[3].home[1]].classList.add('yellow');
 
 let myTeam = teams[0]; //default team
 let teamHome = gridArray[myTeam.home[0]][myTeam.home[1]];
@@ -33,13 +60,10 @@ let connectedCells = [
   {group : 2, color: 'green', cells: []},
   {group : 3, color: 'yellow', cells: []}
 ];
+
 function updateConnectedCells() {
-
-
   console.log('Connected Cells:', connectedCells);
 }
-
-
 
 document.addEventListener('keypress', (event) => {
   switch (event.key) {
@@ -56,6 +80,12 @@ document.addEventListener('keypress', (event) => {
       move('right');
       break;
     case 'q':
+      sendMessage(JSON.stringify({
+        type: 'update',
+        x: parseInt(currentCell.dataset.row),
+        y: parseInt(currentCell.dataset.col),
+        color: myTeam.team
+      }));
       if (currentCell.classList.contains('cell') && currentCell.classList.contains('current') && !currentCell.classList.contains('red') && !currentCell.classList.contains('blue') && !currentCell.classList.contains('green') && !currentCell.classList.contains('yellow')) {
         currentCell.classList.add(myTeam.team);
         updateHighlightedCells();
