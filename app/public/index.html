@@ -10,6 +10,24 @@
     <div id="grid"></div>
   </div>
 
-  <script src="simulation.js"></script>
+  <!--DG964, CHALLENGE MENU + CLOSING BOX-->
+  <div class="challenge-menu">
+  <button id="challengeDropdown">Challenges ▼</button>
+  <div id="challengeList" class="dropdown-content">
+    <button onclick="startChallenge('typing')">Typing Challenge</button>
+    <button onclick="startChallenge('colorTest')">Color Test Challenge</button>
+    <button onclick="startChallenge('memory')">Memory Challenge</button>
+  </div>
+</div>
+<div id="challengeModal" class="modal">
+  <div class="modal-content">
+    <span class="close-button" onclick="closeModal()">&times;</span>
+    <div id="challengeContainer"></div>
+  </div>
+</div>
+
+  <script src="challenges.js" defer></script>
+  <script src="simulation.js" defer></script>
+  
 </body>
 </html>
