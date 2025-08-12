@@ -18,6 +18,9 @@ app.use(express.static("public"));
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 8080 });
 
+// Store chat messages in memory (simple implementation)
+let chatMessages = [];
+
 const gridSize = 50;
 const teams = [
   { team: 'red', home: [0, 0] },
@@ -57,6 +60,9 @@ wss.on('connection', async (ws) => {
     const res = await pool.query('SELECT * FROM board');
     ws.send(JSON.stringify({ type: 'grid', data: res.rows }));
 
+    // Send chat history to the new client
+    ws.send(JSON.stringify({ type: 'chatHistory', data: chatMessages }));
+
     ws.on('message', async (message) => {
       const msg = JSON.parse(message);
 
@@ -64,6 +70,22 @@ wss.on('connection', async (ws) => {
         const { x, y, color } = msg;
         await pool.query('UPDATE board SET color = $1 WHERE x = $2 AND y = $3', [color, x, y]);
         await broadcastGrid();
+      } else if (msg.type === 'chat') {
+        // Chat message received
+        const chatMsg = {
+          user: msg.user || 'Anonymous',
+          text: msg.text,
+          timestamp: Date.now()
+        };
+        chatMessages.push(chatMsg);
+        // Optionally limit chat history size
+        if (chatMessages.length > 100) chatMessages.shift();
+        // Broadcast to all clients
+        wss.clients.forEach(client => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ type: 'chat', data: chatMsg }));
+          }
+        });
       }
     });
 

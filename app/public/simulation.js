@@ -17,6 +17,12 @@ socket.onmessage = function(event) {
       }
     }
   }
+  else if (msg.type === 'chat') {
+    addChatMessage(msg.data);
+  }
+  else if (msg.type === 'chatHistory') {
+    msg.data.forEach(addChatMessage);
+  }
 };
 
 socket.onclose = function(event) {
@@ -26,6 +32,39 @@ socket.onclose = function(event) {
 function sendMessage(message) {
   socket.send(message);
 }
+
+// --- Chat logic ---
+const chatMessagesDiv = document.getElementById('chat-messages');
+const chatForm = document.getElementById('chat-form');
+const chatInput = document.getElementById('chat-input');
+const chatUser = document.getElementById('chat-user');
+
+function addChatMessage(msg) {
+  const date = new Date(msg.timestamp || Date.now());
+  const time = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  const user = msg.user ? `<b style="color:#6cf">${escapeHtml(msg.user)}</b>` : '<b>Anonymous</b>';
+  const text = escapeHtml(msg.text);
+  const div = document.createElement('div');
+  div.innerHTML = `<span style="color:#888">[${time}]</span> ${user}: ${text}`;
+  chatMessagesDiv.appendChild(div);
+  chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+}
+
+function escapeHtml(text) {
+  return text.replace(/[&<>"']/g, function(m) {
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'})[m];
+  });
+}
+
+chatForm.addEventListener('submit', function(e) {
+  e.preventDefault();
+  const text = chatInput.value.trim();
+  const user = chatUser.value.trim() || 'Anonymous';
+  if (text) {
+    socket.send(JSON.stringify({type: 'chat', user, text}));
+    chatInput.value = '';
+  }
+});
 
 var grid = document.getElementById('grid');
 let gridSize = 50;
