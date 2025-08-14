@@ -6,3 +6,9 @@ CREATE TABLE board (
 	y INT NOT NULL,
 	color VARCHAR(15)
 );
+CREATE TABLE messages (
+	name TEXT NOT NULL,
+	text TEXT NOT NULL,
+	color VARCHAR(15) DEFAULT 'gray',
+	timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
