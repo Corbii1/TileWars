@@ -1,42 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8" />
-  <link rel="stylesheet" type="text/css" href="style.css">
+    <meta charset="utf-8" />
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <title>Tile Wars</title>
 </head>
 <body>
-  <h1>Tile Wars</h1>
-  <div class="grid-container">
-    <div id="grid"></div>
-  </div>
+    <h1>Tile Wars</h1>
 
-  <!--DG964, CHALLENGE MENU + CLOSING BOX-->
-  <div class="challenge-menu">
-  <button id="challengeDropdown">Challenges ▼</button>
-  <div id="challengeList" class="dropdown-content">
-    <button onclick="startChallenge('typing')">Typing Challenge</button>
-    <button onclick="startChallenge('colorTest')">Color Test Challenge</button>
-    <button onclick="startChallenge('memory')">Memory Challenge</button>
-  </div>
-</div>
-<div id="challengeModal" class="modal">
-  <div class="modal-content">
-    <span class="close-button" onclick="closeModal()">&times;</span>
-    <div id="challengeContainer"></div>
-  </div>
-</div>
+    <div class="grid-container">
+        <div id="grid"></div>
+    </div>
 
-  <script src="challenges.js" defer></script>
-  <script src="simulation.js" defer></script>
-  <!-- Chat UI -->
-  <div id="chat-container" style="position:fixed;bottom:0;left:0;width:100%;background:#222;padding:10px 0;z-index:1000;">
-    <div id="chat-messages" style="max-height:150px;overflow-y:auto;background:#111;color:#fff;padding:5px 10px;font-size:14px;"></div>
-    <form id="chat-form" style="display:flex;gap:5px;padding:5px 10px;">
-      <input id="chat-user" type="text" placeholder="Name" style="width:80px;" maxlength="16" autocomplete="off" />
-      <input id="chat-input" type="text" placeholder="Type a message..." style="flex:1;" maxlength="200" autocomplete="off" />
-      <button type="submit">Send</button>
-    </form>
-  </div>
-  
+    <!--DG964, CHALLENGE MENU + CLOSING BOX + MODE BUTTON-->
+    <div class="top-controls">
+        <button id="modeButton">Mode: Sabotage</button>
+        <div class="challenge-menu">
+            <button id="challengeDropdown">Challenges ▼</button>
+            <div id="challengeList" class="dropdown-content">
+                <button onclick="startChallenge('typing')">Typing Challenge</button>
+                <button onclick="startChallenge('colorTest')">Color Test Challenge</button>
+                <button onclick="startChallenge('memory')">Memory Challenge</button>
+            </div>
+        </div>
+    </div>
+    <div id="challengeModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <div id="challengeContainer"></div>
+        </div>
+    </div>
+    <script src="challenges.js" defer></script>
+    <script src="simulation.js" defer></script>
+    <script src="modes.js" defer></script>
+
+    <!-- Chat UI -->
+    <div id="chat-container" style="position:fixed;bottom:0;left:0;width:100%;background:#222;padding:10px 0;z-index:1000;">
+        <div id="chat-messages" style="max-height:150px;overflow-y:auto;background:#111;color:#fff;padding:5px 10px;font-size:14px;"></div>
+        <form id="chat-form" style="display:flex;gap:5px;padding:5px 10px;">
+            <input id="chat-user" type="text" placeholder="Name" style="width:80px;" maxlength="16" autocomplete="off" />
+            <input id="chat-input" type="text" placeholder="Type a message..." style="flex:1;" maxlength="200" autocomplete="off" />
+            <button type="submit">Send</button>
+        </form>
+    </div>
+
 </body>
 </html>
