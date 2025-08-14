@@ -6,6 +6,26 @@
     background-color: #fff;
 }
 
+.cell.red { background-color: red; }
+.cell.green { background-color: green; }
+.cell.blue { background-color: blue; }
+.cell.yellow { background-color: yellow; }
+
+.cell.highlight {
+    animation: highlight-animation 1s infinite;
+}
+
+.cell.current {
+    border: 1px solid black;
+    box-shadow: inset 0 0 0 1px black;
+}
+
+@keyframes highlight-animation {
+    0% { background-color: #f0f0f0; }
+    50% { background-color: #d0d0d0; }
+    100% { background-color: #f0f0f0; }
+}
+
 .row {
     display: flex;
 }
@@ -15,132 +35,144 @@
     width: fit-content;
 }
 
-.cell.red{
-    background-color: red;
-}
-.cell.green{
-    background-color: green;
-}
-.cell.blue{
-    background-color: blue;
-}
-.cell.yellow{
-    background-color: yellow;
-}
-
 h1 {
     text-align: center;
     font-family: Arial, sans-serif;
 }
 
-.cell.highlight {
-
-    animation: highlight-animation 1s infinite;
-}
-@keyframes highlight-animation {
-    0% {
-        background-color: #f0f0f0;
-    }
-    50% {
-        background-color: #d0d0d0;
-    }
-    100% {
-        background-color: #f0f0f0;
-    }
-}
-
-.cell.current {
-    border: black 1px solid;
-    box-shadow: inset 0 0 0 1px black;
-}
-
-
-.challenge-menu {
-  position: absolute;
-  top: 10px;
-  right: 20px;
-}
-
-#challengeDropdown {
-  padding: 8px 12px;
-}
-
-.dropdown-content {
-  display: none;
-  position: absolute;
-  right: 0;
-  background-color: #f9f9f9;
-  border: 1px solid #ccc;
-  z-index: 1;
-}
-
-.challenge-menu:hover .dropdown-content {
-  display: block;
-}
-
-.dropdown-content button {
-  display: block;
-  padding: 8px;
-  width: 100%;
-  text-align: left;
-  border: none;
-  background-color: white;
-  cursor: pointer;
-}
-
-.dropdown-content button:hover {
-  background-color: #ddd;
-}
-
 .modal {
-  display: none;
-  position: fixed;
-  top: 10%;
-  left: 25%;
-  width: 50%;
-  background-color: #222;
-  color: #eee;
-  border: 2px solid #444;
-  z-index: 10;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.7);
-  font-family: 'Courier New', Courier, monospace;
+    display: none;
+    position: fixed;
+    top: 10%;
+    left: 25%;
+    width: 50%;
+    background-color: #222;
+    color: #eee;
+    border: 2px solid #444;
+    z-index: 10;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.7);
+    font-family: 'Courier New', Courier, monospace;
 }
 
 .modal-content {
-  position: relative;
+    position: relative;
 }
 
 .close-button {
-  position: absolute;
-  top: 4px;
-  right: 8px;
-  cursor: pointer;
-  font-size: 24px;
-  color: #eee;
-  user-select: none;
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    cursor: pointer;
+    font-size: 24px;
+    color: #eee;
+    user-select: none;
 }
 
 #challengeContainer {
-  text-align: center;
+    text-align: center;
 }
 
 #typingInput {
-  width: 90%;
-  max-width: 600px;
-  box-sizing: border-box;
-  margin: 10px auto 0 auto;
-  display: block;
+    width: 90%;
+    max-width: 600px;
+    box-sizing: border-box;
+    margin: 10px auto 0 auto;
+    display: block;
 }
 
 #typingFeedback span {
-  font-weight: bold;
-  font-size: 1.2em;
+    font-weight: bold;
+    font-size: 1.2em;
 }
 
 #typingResult {
-  margin-top: 15px;
-  font-size: 1.1em;
-  color: #0f0;
+    margin-top: 15px;
+    font-size: 1.1em;
+    color: #0f0;
+}
+
+.top-controls {
+    position: absolute;
+    top: 10px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.top-controls button {
+    width: 150px;
+    height: 38px;
+    padding: 8px 12px;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.challenge-menu {
+    position: relative;
+}
+
+.challenge-menu .dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 150px;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    z-index: 1;
+}
+
+.challenge-menu:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown-content button {
+    display: block;
+    padding: 8px;
+    width: 100%;
+    text-align: left;
+    border: none;
+    background-color: white;
+    cursor: pointer;
+}
+
+.dropdown-content button:hover {
+    background-color: #ddd;
+}
+
+.mode-options {
+    position: absolute;
+    top: 60px;
+    left: 20px;
+    width: 180px;
+    background-color: #f1f1f1;
+    border: 1px solid #ccc;
+    padding: 8px;
+    border-radius: 6px;
+    z-index: 5;
+    font-family: Arial, sans-serif;
+}
+
+.mode-options h4 {
+    margin: 0 0 6px 0;
+    font-size: 14px;
+}
+
+.mode-options button.option-btn {
+    display: block;
+    width: 100%;
+    padding: 6px;
+    margin-bottom: 4px;
+    text-align: left;
+    border: none;
+    cursor: pointer;
+    background-color: white;
+}
+
+.mode-options button.option-btn.active {
+    background-color: #4CAF50;
+    color: white;
 }
