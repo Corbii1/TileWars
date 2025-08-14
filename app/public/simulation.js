@@ -1,77 +1,100 @@
-const socket = new WebSocket('ws://localhost:8080');
+let socket = null;
+let gridLoaded = false;
+window.addEventListener('load', () => {
+  let userId = document.cookie.replace(/(?:(?:^|.*;\s*)user_id\s*\=\s*([^;]*).*$)|^.*$/, '$1');
+  if (!userId) {
+    const username = getRandomUsername();
+    document.cookie = `user_id=${username};`;
+    userId = username;
+  }
+  console.log(userId);
+  socket = new WebSocket(`ws://localhost:8080?user_id=${userId}`);
 
-socket.onopen = function(event) {
-  // Handle connection open
-};
+  chatUser = userId;
 
-socket.onmessage = function(event) {
-  const msg = JSON.parse(event.data);
-  if (msg.type === 'grid') {
-    const gridData = msg.data;
+  socket.onopen = function (event) {
+    // Handle connection open
+  };
 
-    for (let cell of gridData) {
-      let domCell = gridArray[cell.x][cell.y];
-      domCell.className = 'cell';
-      if (cell.color) {
-        domCell.classList.add(cell.color);
+  socket.onmessage = function (event) {
+    const msg = JSON.parse(event.data);
+    if (msg.type === 'grid') {
+      const gridData = msg.data;
+
+      for (let cell of gridData) {
+        let domCell = gridArray[cell.x][cell.y];
+        domCell.className = 'cell';
+        if (cell.color) {
+          domCell.classList.add(cell.color);
+        }
       }
+      gridLoaded = true;
     }
-  }
-  else if (msg.type === 'chat') {
-    addChatMessage(msg.data);
-  }
-  else if (msg.type === 'chatHistory') {
-    msg.data.forEach(addChatMessage);
-  }
-};
+    else if (msg.type === 'chat') {
+      addChatMessage(msg.data);
+    }
+    else if (msg.type === 'chatHistory') {
+      msg.data.forEach(addChatMessage);
+    } else if (msg.type === 'player') {
+      player = msg.data;
+      currentCell = gridArray[player.location[0]][player.location[1]];
+      updateHighlightedCells();
+      currentCell.style.border = "black 1px solid";
+      currentCell.style.boxShadow = "inset 0 0 0 1px black";
+    }
+  };
 
-socket.onclose = function(event) {
-  // Handle connection close
-};
+  socket.onclose = function (event) {
+    // Handle connection close
+  };
+
+});
 
 function sendMessage(message) {
   socket.send(message);
 }
 
+
 // --- Chat logic ---
 const chatMessagesDiv = document.getElementById('chat-messages');
 const chatForm = document.getElementById('chat-form');
 const chatInput = document.getElementById('chat-input');
-const chatUser = document.getElementById('chat-user');
+var chatUser = null;
 
 function addChatMessage(msg) {
+  console.log(msg);
   const date = new Date(msg.timestamp || Date.now());
-  const time = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-  const user = msg.user ? `<b style="color:#6cf">${escapeHtml(msg.user)}</b>` : '<b>Anonymous</b>';
+  const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const name = msg.name ? `<b style="color:${msg.color || '#888'}">${escapeHtml(msg.name)}</b>` : '<b>Anonymous</b>';
   const text = escapeHtml(msg.text);
   const div = document.createElement('div');
-  div.innerHTML = `<span style="color:#888">[${time}]</span> ${user}: ${text}`;
+  div.innerHTML = `<span style="color:#888">[${time}]</span> ${name}: ${text}`;
   chatMessagesDiv.appendChild(div);
   chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
 }
 
-function escapeHtml(text) {
-  return text.replace(/[&<>"']/g, function(m) {
-    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'})[m];
-  });
-}
-
-chatForm.addEventListener('submit', function(e) {
+chatForm.addEventListener('submit', function (e) {
   e.preventDefault();
   const text = chatInput.value.trim();
-  const user = chatUser.value.trim() || 'Anonymous';
+  const name = chatUser.trim() || 'Anonymous';
   if (text) {
-    socket.send(JSON.stringify({type: 'chat', user, text}));
+    socket.send(JSON.stringify({ type: 'chat', name, text, color: player.color }));
     chatInput.value = '';
   }
 });
 
+function escapeHtml(text) {
+  return text.replace(/[&<>"']/g, function (m) {
+    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' })[m];
+  });
+}
+
 var grid = document.getElementById('grid');
 let gridSize = 50;
 var teams = [
-  { team: 'red', home: [0, 0] }, 
-  { team: 'blue', home: [0, 49] }, 
-  { team: 'green', home: [49, 0] }, 
+  { team: 'red', home: [0, 0] },
+  { team: 'blue', home: [0, 49] },
+  { team: 'green', home: [49, 0] },
   { team: 'yellow', home: [49, 49] }
 ];
 for (let i = 0; i < gridSize; i++) {
@@ -88,113 +111,151 @@ for (let i = 0; i < gridSize; i++) {
 }
 let gridArray = Array.from(grid.children).map(row => Array.from(row.children));
 
-let myTeam = teams[0]; //default team
-let teamHome = gridArray[myTeam.home[0]][myTeam.home[1]];
-let currentCell = teamHome;
-let hcells = highlightNearbyCells();
+let player = {
+  color: null,
+  location: []
+}
 
-let connectedCells = [
-  {group : 0, color: 'red', cells: []},
-  {group : 1, color: 'blue', cells: []},
-  {group : 2, color: 'green', cells: []},
-  {group : 3, color: 'yellow', cells: []}
-];
+let currentCell = null;
+let hcells = [];
 
-function updateConnectedCells() {
-  console.log('Connected Cells:', connectedCells);
+let namebase = {
+  prefixes: [
+    'golden',
+    'silver',
+    'bronze',
+    'bold',
+    'brave',
+    'silent',
+    'strong',
+    'fierce',
+    'intrepid',
+    'cunning',
+    'wise',
+    'sneaky',
+    'quick',
+    'lively',
+    'agile',
+    'sharp'
+  ],
+  suffixes: [
+    'tiger',
+    'fox',
+    'wizard',
+    'goose',
+    'donkey',
+    'samurai',
+    'lion',
+    'elephant',
+    'monkey',
+    'ninja',
+    'warrior',
+    'pirate',
+    'viking',
+    'dragon',
+    'knight',
+  ]
+}
+
+
+
+function getRandomUsername() {
+  const prefix = namebase.prefixes[Math.floor(Math.random() * namebase.prefixes.length)];
+  const suffix = namebase.suffixes[Math.floor(Math.random() * namebase.suffixes.length)];
+  const number = Math.floor(Math.random() * 1000);
+  return `${prefix}_${suffix}${number}`;
 }
 
 document.addEventListener('keypress', (event) => {
-  switch (event.key) {
-    case 'w':
-      move('up');
-      break;
-    case 's':
-      move('down');
-      break;
-    case 'a':
-      move('left');
-      break;
-    case 'd':
-      move('right');
-      break;
-    case 'q':
-      sendMessage(JSON.stringify({
-        type: 'update',
-        x: parseInt(currentCell.dataset.row),
-        y: parseInt(currentCell.dataset.col),
-        color: myTeam.team
-      }));
-      if (currentCell.classList.contains('cell') && currentCell.classList.contains('current') && !currentCell.classList.contains('red') && !currentCell.classList.contains('blue') && !currentCell.classList.contains('green') && !currentCell.classList.contains('yellow')) {
-        currentCell.classList.add(myTeam.team);
-        updateHighlightedCells();
-        updateConnectedCells();
-      } else if (currentCell.classList.contains('cell') && !currentCell.classList.contains(myTeam.team)) {
-        // If the current cell is already occupied by another team, remove that team
-        let occupiedTeam = Array.from(currentCell.classList).find(cls => teams.map(t => t.team).includes(cls));
-        if (occupiedTeam) {
-          currentCell.classList.remove(occupiedTeam);
-          updateHighlightedCells();
-          updateConnectedCells();
-        }
-      }
-      break;
-    case ' ':
-      // Switch team
-      let currentTeamIndex = teams.findIndex(team => team.team === myTeam.team);
-      currentTeamIndex = (currentTeamIndex + 1) % teams.length;
-      myTeam = teams[currentTeamIndex];
+  if (gridLoaded) {
+    switch (event.key) {
+      case 'w':
+        move('up');
+        break;
+      case 's':
+        move('down');
+        break;
+      case 'a':
+        move('left');
+        break;
+      case 'd':
+        move('right');
+        break;
+      case 'q':
+        sendMessage(JSON.stringify({
+          type: 'update',
+          x: parseInt(currentCell.dataset.row),
+          y: parseInt(currentCell.dataset.col),
+          color: player.color
+        }));
 
-      teamHome = gridArray[myTeam.home[0]][myTeam.home[1]];
-      currentCell.classList.remove('current');
-      currentCell = teamHome;
-      currentCell.classList.add('current');
-      updateHighlightedCells();
-      updateConnectedCells();
+        currentCell.classList = 'cell ' + player.color;
+
+        break;
+      case ' ':
+        // Switch team
+        let currentTeamIndex = teams.findIndex(team => team.team === player.color);
+        currentTeamIndex = (currentTeamIndex + 1) % teams.length;
+        player.color = teams[currentTeamIndex].team;
+        player.location[0] = teams[currentTeamIndex].team.home[0];
+        player.location[1] = teams[currentTeamIndex].team.home[1];
+        location = gridArray[player.location[0]][player.location[1]];
+        currentCell.style.border = null;
+        currentCell.style.boxShadow = null;
+        currentCell = location;
+        currentCell.style.border = "black 1px solid";
+        currentCell.style.boxShadow = "inset 0 0 0 1px black";
+        break;
+
+    }
+    updateHighlightedCells();
+
   }
 });
 
-function highlightNearbyCells() {
-  //iterate through all cells in gridArray with my team
-  let highlightedCells = [];
-  gridArray.forEach((row, rowIndex) => {
-    row.forEach((cell, colIndex) => {
-      if (cell.classList.contains(myTeam.team)) {
-        //highlight 4 cells around the current cell
-        let directions = [
-          { row: -1, col: 0 }, // Up
-          { row: 1, col: 0 }, // Down
-          { row: 0, col: -1 }, // Left
-          { row: 0, col: 1 }   // Right
-        ];
-        directions.forEach(dir => {
-          let newRow = rowIndex + dir.row;
-          let newCol = colIndex + dir.col;
-          if (newRow >= 0 && newRow < gridSize && newCol >= 0 && newCol < gridSize) {
-            let neighborCell = gridArray[newRow][newCol];
-            if (neighborCell.classList.contains('cell') && !neighborCell.classList.contains(myTeam.team)) {
-              neighborCell.classList.add('highlight');
-              highlightedCells.push(neighborCell);
-            }
-          }
-        });
-      }
-    });
-  }, this);
-  return highlightedCells;
-}
 
 function updateHighlightedCells() {
-  hcells.forEach(cell => {
+  hcells = [];
+  gridArray.forEach(row => row.forEach(cell => {
+    cell.style.animationDuration = null;
+    cell.style.animationIterationCount = null;
+    cell.style.animationName = null;
+  }));
 
-    //wait for the console to log before removing highlight
-    cell.classList.remove('highlight');
+  if (player.color) {
+    for (let i = 0; i < gridSize; i++) {
+      for (let j = 0; j < gridSize; j++) {
+        if (gridArray[i][j].classList.contains(player.color)) {
+          if (hcells.some(cell => cell === gridArray[i][j])) continue;
 
-  });
-  setInterval(() => {
-    hcells = highlightNearbyCells();
-  }, 1);
+          const adjacentCells = getAdjacentCells(i, j);
+          adjacentCells.forEach(cell => {
+            if (!cell.classList.contains(player.color) && cell.style.animationName !== 'highlight-animation') {
+              if (hcells.some(cell => cell === gridArray[i][j])) return;
+              setTimeout(() => {
+                cell.style.animationDuration = '1s';
+                cell.style.animationIterationCount = 'infinite';
+                cell.style.animationName = 'highlight-animation';
+              }, 100); // Delay applied here
+              hcells.push(cell);
+            }
+          });
+        }
+      }
+    }
+  }
 }
+
+function getAdjacentCells(row, col) {
+  const adjacentCells = [];
+  if (row - 1 >= 0) adjacentCells.push(gridArray[row - 1][col]);
+  if (row + 1 < gridSize) adjacentCells.push(gridArray[row + 1][col]);
+  if (col - 1 >= 0) adjacentCells.push(gridArray[row][col - 1]);
+  if (col + 1 < gridSize) adjacentCells.push(gridArray[row][col + 1]);
+  return adjacentCells;
+
+}
+
 
 function move(direction) {
 
@@ -218,12 +279,13 @@ function move(direction) {
       newCol = Math.min(gridSize - 1, col + 1);
       break;
   }
-  if (gridArray[newRow][newCol].classList.contains('cell') && gridArray[newRow][newCol].classList.contains('highlight') || gridArray[newRow][newCol].classList.contains('red') || gridArray[newRow][newCol].classList.contains('blue') || gridArray[newRow][newCol].classList.contains('green') || gridArray[newRow][newCol].classList.contains('yellow')) {
-    currentCell.classList.remove('current');
+  if (gridArray[newRow][newCol].classList.contains('cell') && (gridArray[newRow][newCol].classList.contains('red') || gridArray[newRow][newCol].classList.contains('blue') || gridArray[newRow][newCol].classList.contains('green') || gridArray[newRow][newCol].classList.contains('yellow') || gridArray[newRow][newCol].classList.contains('gray') || gridArray[newRow][newCol].style.animationName === 'highlight-animation')) {
+    currentCell.style.border = null;
+    currentCell.style.boxShadow = null;
     currentCell = gridArray[newRow][newCol];
-    updateHighlightedCells();
-    updateConnectedCells();
-    currentCell.classList.add('current');
-
+    currentCell.style.border = "black 1px solid";
+    currentCell.style.boxShadow = "inset 0 0 0 1px black";
   }
 }
+
+updateHighlightedCells();
