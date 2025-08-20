@@ -124,6 +124,41 @@ let player = {
 let currentCell = null;
 let hcells = [];
 
+// --- Tile Bank and Timer Logic ---
+const tileCountSpan = document.getElementById('tile-count');
+const timerCountSpan = document.getElementById('timer-count');
+let tileBank = 0;
+const tileBankMax = 5;
+let timer = 3;
+
+function updateTileBankUI() {
+  tileCountSpan.textContent = tileBank;
+}
+
+function updateTimerUI() {
+  timerCountSpan.textContent = timer;
+}
+
+function tileTimerTick() {
+  if (tileBank < tileBankMax) {
+    timer--;
+    updateTimerUI();
+    if (timer <= 0) {
+      tileBank++;
+      updateTileBankUI();
+      timer = 3;
+      updateTimerUI();
+    }
+  } else {
+    timer = 3;
+    updateTimerUI();
+  }
+}
+
+setInterval(tileTimerTick, 1000);
+updateTileBankUI();
+updateTimerUI();
+
 let namebase = {
   prefixes: [
     'golden',
@@ -189,15 +224,17 @@ document.addEventListener('keypress', (event) => {
         move('right');
         break;
       case 'q':
-        sendMessage(JSON.stringify({
-          type: 'update',
-          x: parseInt(currentCell.dataset.row),
-          y: parseInt(currentCell.dataset.col),
-          color: player.color
-        }));
-
-        currentCell.classList = 'cell ' + player.color;
-
+        if (tileBank > 0) {
+          sendMessage(JSON.stringify({
+            type: 'update',
+            x: parseInt(currentCell.dataset.row),
+            y: parseInt(currentCell.dataset.col),
+            color: player.color
+          }));
+          currentCell.classList = 'cell ' + player.color;
+          tileBank--;
+          updateTileBankUI();
+        }
         break;
       case ' ':
         // Switch team
