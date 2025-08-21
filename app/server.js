@@ -33,6 +33,7 @@ const teams = [
 async function initializeGrid() {
   await pool.query('DELETE FROM messages');
   await pool.query('DELETE FROM board');
+  await pool.query('DELETE FROM players');
 
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
@@ -114,7 +115,7 @@ function connectedCells(cells) {
       group.cells.forEach(c => c.color = 'gray')
     }
   }
-  console.log(groups);
+  //console.log(groups);
   return groups;
 }
 
@@ -136,6 +137,19 @@ wss.on('connection', async (ws, req) => {
   const clientId = req.url.split('user_id=')[1].split('&')[0];
   console.log('Client connected', clientId);
 
+  const playerIdExists = await pool.query('SELECT * FROM players WHERE id = $1', [clientId]);
+
+  let team = teams[Math.floor(Math.random() * teams.length)];
+  if (connectedUsers.length < 4) {
+    team = teams[connectedUsers.length];
+  }
+
+  console.log("Assigning team", team.team);
+
+  if (playerIdExists.rows.length === 0) {
+    await pool.query(`INSERT INTO players (id, color, x, y) VALUES ($1, $2, $3, $4)`, [clientId, team.team, team.home[0], team.home[1]]);
+  }
+
   if (!connectedUsers.some(user => user.clientId === clientId) && connectedUsers.length < 4) {
     connectedUsers.push({ ws, clientId, teamColor: teams[connectedUsers.length].team, playerLocation: teams[connectedUsers.length].home });
   } else if (connectedUsers.some(user => user.clientId === clientId)) {
@@ -144,10 +158,12 @@ wss.on('connection', async (ws, req) => {
 
   ws.send(JSON.stringify({ type: 'player', data: { color: connectedUsers[connectedUsers.length - 1].teamColor, location: connectedUsers[connectedUsers.length - 1].playerLocation } }));
 
-  if (connectedUsers.length === 4 && !allConnected) {
+  if (!allConnected && connectedUsers.length === 4) {
     console.log('All players are connected');
-    update();
     allConnected = true;
+    update();
+  } else if (allConnected) {
+    update();
   }
 
   const res = await pool.query('SELECT * FROM messages ORDER BY timestamp DESC LIMIT 100');
