@@ -11,6 +11,20 @@ document.addEventListener('keydown', (e) => {
     if (['w','a','s','d'].includes(e.key)) lastDirection = e.key;
 });
 
+//PAINT HELPER
+function paintCell(row, col, teamColor) {
+    if (row < 0 || row >= gridSize || col < 0 || col >= gridSize) return;
+    const cell = gridArray[row][col];
+    cell.classList.remove('red','blue','green','yellow');
+    cell.classList.add(teamColor);
+    sendMessage(JSON.stringify({
+        type: 'update',
+        x: row,
+        y: col,
+        color: teamColor
+    }));
+}
+
 //SABOTAGE FUNCTIONS
 const sabotageFunctions = {
 
@@ -19,26 +33,17 @@ const sabotageFunctions = {
         if (!currentCell) return;
         let row = parseInt(currentCell.dataset.row);
         let col = parseInt(currentCell.dataset.col);
-        currentCell.classList.remove('red','blue','green','yellow');
-        currentCell.classList.add(teamColor);
+        paintCell(row, col, teamColor);
         if (lastDirection === 'w' || lastDirection === 's') {
             for (let i = 1; i <= 2; i++) {
                 let newRow = lastDirection === 'w' ? row - i : row + i;
-                if (newRow >= 0 && newRow < gridSize) {
-                    let cell = gridArray[newRow][col];
-                    cell.classList.remove('red','blue','green','yellow');
-                    cell.classList.add(teamColor);
-                }
+                paintCell(newRow, col, teamColor);
             }
         } 
         else {
             for (let i = 1; i <= 2; i++) {
                 let newCol = lastDirection === 'a' ? col - i : col + i;
-                if (newCol >= 0 && newCol < gridSize) {
-                    let cell = gridArray[row][newCol];
-                    cell.classList.remove('red','blue','green','yellow');
-                    cell.classList.add(teamColor);
-                }
+                paintCell(row, newCol, teamColor);
             }
         }
     },
@@ -48,26 +53,17 @@ const sabotageFunctions = {
         if (!currentCell) return;
         let row = parseInt(currentCell.dataset.row);
         let col = parseInt(currentCell.dataset.col);
-        currentCell.classList.remove('red','blue','green','yellow');
-        currentCell.classList.add(teamColor);
+        paintCell(row, col, teamColor);
         let delta = lastDirection === 'a' || lastDirection === 'd' ? 'vertical' : 'horizontal';
         let offsets = [-2,-1,1,2];
         offsets.forEach(o => {
             if (delta === 'horizontal') {
                 let newCol = col + o;
-                if (newCol >= 0 && newCol < gridSize) {
-                    let cell = gridArray[row][newCol];
-                    cell.classList.remove('red','blue','green','yellow');
-                    cell.classList.add(teamColor);
-                }
+                paintCell(row, newCol, teamColor);
             } 
             else {
                 let newRow = row + o;
-                if (newRow >= 0 && newRow < gridSize) {
-                    let cell = gridArray[newRow][col];
-                    cell.classList.remove('red','blue','green','yellow');
-                    cell.classList.add(teamColor);
-                }
+                paintCell(newRow, col, teamColor);
             }
         });
     },
@@ -77,8 +73,7 @@ const sabotageFunctions = {
         if (!currentCell) return;
         let row = parseInt(currentCell.dataset.row);
         let col = parseInt(currentCell.dataset.col);
-        currentCell.classList.remove('red','blue','green','yellow');
-        currentCell.classList.add(teamColor);
+        paintCell(row, col, teamColor);
         let rowOffsets = [-1,0,1];
         let colOffsets = [-1,0,1];
         if (lastDirection === 'w') rowOffsets = [-3,-2,-1];
@@ -90,9 +85,9 @@ const sabotageFunctions = {
                 let newRow = row + rOff;
                 let newCol = col + cOff;
                 if ((newRow === row && newCol === col) || newRow < 0 || newRow >= gridSize || newCol < 0 || newCol >= gridSize) return;
-                let cell = gridArray[newRow][newCol];
+                const cell = gridArray[newRow][newCol];
                 if (!cell.classList.contains('red') && !cell.classList.contains('blue') && !cell.classList.contains('green') && !cell.classList.contains('yellow')) {
-                    cell.classList.add(teamColor);
+                    paintCell(newRow, newCol, teamColor);
                 }
             });
         });
@@ -103,8 +98,7 @@ const sabotageFunctions = {
         if (!currentCell) return;
         let row = parseInt(currentCell.dataset.row);
         let col = parseInt(currentCell.dataset.col);
-        currentCell.classList.remove('red','blue','green','yellow');
-        currentCell.classList.add(teamColor);
+        paintCell(row, col, teamColor);
         let rowOffsets = [-1,0,1];
         let colOffsets = [-1,0,1];
         if (lastDirection === 'w') rowOffsets = [-3,-2,-1];
@@ -116,10 +110,9 @@ const sabotageFunctions = {
                 let newRow = row + rOff;
                 let newCol = col + cOff;
                 if ((newRow === row && newCol === col) || newRow < 0 || newRow >= gridSize || newCol < 0 || newCol >= gridSize) return;
-                let cell = gridArray[newRow][newCol];
+                const cell = gridArray[newRow][newCol];
                 if ((cell.classList.contains('red') || cell.classList.contains('blue') || cell.classList.contains('green') || cell.classList.contains('yellow')) && !cell.classList.contains(teamColor)) {
-                    cell.classList.remove('red','blue','green','yellow');
-                    cell.classList.add(teamColor);
+                    paintCell(newRow, newCol, teamColor);
                 }
             });
         });
@@ -131,8 +124,7 @@ const sabotageFunctions = {
         let row = parseInt(currentCell.dataset.row);
         let col = parseInt(currentCell.dataset.col);
         const teamColors = ['red','blue','green','yellow'];
-        currentCell.classList.remove('red','blue','green','yellow');
-        currentCell.classList.add(teamColors[Math.floor(Math.random() * teamColors.length)]);
+        paintCell(row, col, teamColors[Math.floor(Math.random() * teamColors.length)]);
         let rowOffsets = [-1,0,1];
         let colOffsets = [-1,0,1];
         if (lastDirection === 'w') rowOffsets = [-3,-2,-1];
@@ -144,13 +136,17 @@ const sabotageFunctions = {
                 let newRow = row + rOff;
                 let newCol = col + cOff;
                 if ((newRow === row && newCol === col) || newRow < 0 || newRow >= gridSize || newCol < 0 || newCol >= gridSize) return;
-                let cell = gridArray[newRow][newCol];
-                cell.classList.remove('red','blue','green','yellow');
-                cell.classList.add(teamColors[Math.floor(Math.random() * teamColors.length)]);
+                paintCell(newRow, newCol, teamColors[Math.floor(Math.random() * teamColors.length)]);
             });
         });
     }
 };
+
+//REWARD
+function grantReward(amount) {
+    tileBank = Math.min(tileBank + amount, tileBankMax);
+    updateTileBankUI();
+}
 
 //OPTIONS MENU SETUP
 const optionsMenu = document.createElement("div");
@@ -167,7 +163,7 @@ document.body.appendChild(optionsMenu);
 let currentOptionType = modes[currentModeIndex];
 let activeOption = null;
 
-//BUILD MENU FUNCTION (REWARD NOT YET IMPLEMENTED UNTIL WE LIMIT THE CREATION OF MULTIPLE SQUARES IN ONE GO)
+//BUILD MENU FUNCTION
 function buildMenu(type) {
     optionsMenu.innerHTML = "";
     if (type === "Sabotage") {
@@ -182,14 +178,16 @@ function buildMenu(type) {
             optionsMenu.appendChild(btn);
         });
     } 
-    else {
-        ["Reward1","Reward2","Reward3"].forEach(name => {
+    else if (type === "Reward") {
+        const rewardOptions = [
+            { name: "+1", amount: 1 },
+            { name: "+3", amount: 3 },
+            { name: "+5", amount: 5 }];
+        rewardOptions.forEach(opt => {
             const btn = document.createElement("button");
-            btn.textContent = name;
+            btn.textContent = opt.name;
             btn.onclick = () => {
-                activeOption = name;
-                Array.from(optionsMenu.children).forEach(b => b.style.fontWeight = "normal");
-                btn.style.fontWeight = "bold";
+                grantReward(opt.amount);
             };
             optionsMenu.appendChild(btn);
         });
