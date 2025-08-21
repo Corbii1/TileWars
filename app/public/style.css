@@ -10,6 +10,7 @@
 .cell.green { background-color: green; }
 .cell.blue { background-color: blue; }
 .cell.yellow { background-color: yellow; }
+.cell.gray { background-color: gray; }
 
 @keyframes highlight-animation {
     0% { background-color: #f0f0f0; }

@@ -41,6 +41,11 @@ window.addEventListener('load', () => {
       updateHighlightedCells();
       currentCell.style.border = "black 1px solid";
       currentCell.style.boxShadow = "inset 0 0 0 1px black";
+    } else if (msg.type === 'eliminated') {
+      currentCell.style.border = null;
+      currentCell.style.boxShadow = null;
+      currentCell = null;
+      isAlive = false;
     }
   };
 
@@ -166,8 +171,10 @@ function getRandomUsername() {
   return `${prefix}_${suffix}${number}`;
 }
 
+let isAlive = true;
+
 document.addEventListener('keypress', (event) => {
-  if (gridLoaded) {
+  if (gridLoaded && isAlive) {
     switch (event.key) {
       case 'w':
         move('up');
@@ -279,12 +286,19 @@ function move(direction) {
       newCol = Math.min(gridSize - 1, col + 1);
       break;
   }
-  if (gridArray[newRow][newCol].classList.contains('cell') && (gridArray[newRow][newCol].classList.contains('red') || gridArray[newRow][newCol].classList.contains('blue') || gridArray[newRow][newCol].classList.contains('green') || gridArray[newRow][newCol].classList.contains('yellow') || gridArray[newRow][newCol].classList.contains('gray') || gridArray[newRow][newCol].style.animationName === 'highlight-animation')) {
+  if (gridArray[newRow][newCol].classList.contains('cell') && (gridArray[newRow][newCol].style.animationName === 'highlight-animation' || gridArray[newRow][newCol].classList.contains(player.color))) {
     currentCell.style.border = null;
     currentCell.style.boxShadow = null;
     currentCell = gridArray[newRow][newCol];
     currentCell.style.border = "black 1px solid";
     currentCell.style.boxShadow = "inset 0 0 0 1px black";
+
+    sendMessage(JSON.stringify({
+      type: 'move',
+      x: parseInt(currentCell.dataset.row),
+      y: parseInt(currentCell.dataset.col),
+      color: player.color
+    }));
   }
 }
 

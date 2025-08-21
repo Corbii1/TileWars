@@ -19,14 +19,14 @@ const sabotageFunctions = {
         if (!currentCell) return;
         let row = parseInt(currentCell.dataset.row);
         let col = parseInt(currentCell.dataset.col);
-        currentCell.classList.remove('red','blue','green','yellow','highlight');
+        currentCell.classList.remove('red','blue','green','yellow');
         currentCell.classList.add(teamColor);
         if (lastDirection === 'w' || lastDirection === 's') {
             for (let i = 1; i <= 2; i++) {
                 let newRow = lastDirection === 'w' ? row - i : row + i;
                 if (newRow >= 0 && newRow < gridSize) {
                     let cell = gridArray[newRow][col];
-                    cell.classList.remove('red','blue','green','yellow','highlight');
+                    cell.classList.remove('red','blue','green','yellow');
                     cell.classList.add(teamColor);
                 }
             }
@@ -36,7 +36,7 @@ const sabotageFunctions = {
                 let newCol = lastDirection === 'a' ? col - i : col + i;
                 if (newCol >= 0 && newCol < gridSize) {
                     let cell = gridArray[row][newCol];
-                    cell.classList.remove('red','blue','green','yellow','highlight');
+                    cell.classList.remove('red','blue','green','yellow');
                     cell.classList.add(teamColor);
                 }
             }
@@ -48,7 +48,7 @@ const sabotageFunctions = {
         if (!currentCell) return;
         let row = parseInt(currentCell.dataset.row);
         let col = parseInt(currentCell.dataset.col);
-        currentCell.classList.remove('red','blue','green','yellow','highlight');
+        currentCell.classList.remove('red','blue','green','yellow');
         currentCell.classList.add(teamColor);
         let delta = lastDirection === 'a' || lastDirection === 'd' ? 'vertical' : 'horizontal';
         let offsets = [-2,-1,1,2];
@@ -57,7 +57,7 @@ const sabotageFunctions = {
                 let newCol = col + o;
                 if (newCol >= 0 && newCol < gridSize) {
                     let cell = gridArray[row][newCol];
-                    cell.classList.remove('red','blue','green','yellow','highlight');
+                    cell.classList.remove('red','blue','green','yellow');
                     cell.classList.add(teamColor);
                 }
             } 
@@ -65,7 +65,7 @@ const sabotageFunctions = {
                 let newRow = row + o;
                 if (newRow >= 0 && newRow < gridSize) {
                     let cell = gridArray[newRow][col];
-                    cell.classList.remove('red','blue','green','yellow','highlight');
+                    cell.classList.remove('red','blue','green','yellow');
                     cell.classList.add(teamColor);
                 }
             }
@@ -77,7 +77,7 @@ const sabotageFunctions = {
         if (!currentCell) return;
         let row = parseInt(currentCell.dataset.row);
         let col = parseInt(currentCell.dataset.col);
-        currentCell.classList.remove('red','blue','green','yellow','highlight');
+        currentCell.classList.remove('red','blue','green','yellow');
         currentCell.classList.add(teamColor);
         let rowOffsets = [-1,0,1];
         let colOffsets = [-1,0,1];
@@ -93,7 +93,6 @@ const sabotageFunctions = {
                 let cell = gridArray[newRow][newCol];
                 if (!cell.classList.contains('red') && !cell.classList.contains('blue') && !cell.classList.contains('green') && !cell.classList.contains('yellow')) {
                     cell.classList.add(teamColor);
-                    cell.classList.remove('highlight');
                 }
             });
         });
@@ -104,7 +103,7 @@ const sabotageFunctions = {
         if (!currentCell) return;
         let row = parseInt(currentCell.dataset.row);
         let col = parseInt(currentCell.dataset.col);
-        currentCell.classList.remove('red','blue','green','yellow','highlight');
+        currentCell.classList.remove('red','blue','green','yellow');
         currentCell.classList.add(teamColor);
         let rowOffsets = [-1,0,1];
         let colOffsets = [-1,0,1];
@@ -119,7 +118,7 @@ const sabotageFunctions = {
                 if ((newRow === row && newCol === col) || newRow < 0 || newRow >= gridSize || newCol < 0 || newCol >= gridSize) return;
                 let cell = gridArray[newRow][newCol];
                 if ((cell.classList.contains('red') || cell.classList.contains('blue') || cell.classList.contains('green') || cell.classList.contains('yellow')) && !cell.classList.contains(teamColor)) {
-                    cell.classList.remove('red','blue','green','yellow','highlight');
+                    cell.classList.remove('red','blue','green','yellow');
                     cell.classList.add(teamColor);
                 }
             });
@@ -132,7 +131,7 @@ const sabotageFunctions = {
         let row = parseInt(currentCell.dataset.row);
         let col = parseInt(currentCell.dataset.col);
         const teamColors = ['red','blue','green','yellow'];
-        currentCell.classList.remove('red','blue','green','yellow','highlight');
+        currentCell.classList.remove('red','blue','green','yellow');
         currentCell.classList.add(teamColors[Math.floor(Math.random() * teamColors.length)]);
         let rowOffsets = [-1,0,1];
         let colOffsets = [-1,0,1];
@@ -146,7 +145,7 @@ const sabotageFunctions = {
                 let newCol = col + cOff;
                 if ((newRow === row && newCol === col) || newRow < 0 || newRow >= gridSize || newCol < 0 || newCol >= gridSize) return;
                 let cell = gridArray[newRow][newCol];
-                cell.classList.remove('red','blue','green','yellow','highlight');
+                cell.classList.remove('red','blue','green','yellow');
                 cell.classList.add(teamColors[Math.floor(Math.random() * teamColors.length)]);
             });
         });
@@ -211,6 +210,6 @@ modeButton.addEventListener("click", () => {
 //TRIGGER SABOTAGE, CLICK ON WHATEVER ONE YOU WANT, THEN PRESS E TO ACTIVATE
 document.addEventListener('keydown', (e) => {
     if (e.key === 'e' && currentOptionType === 'Sabotage' && activeOption) {
-        sabotageFunctions[activeOption](myTeam.team);
+        sabotageFunctions[activeOption](player.color);
     }
 });
