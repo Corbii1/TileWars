@@ -139,24 +139,26 @@ wss.on('connection', async (ws, req) => {
 
   const playerIdExists = await pool.query('SELECT * FROM players WHERE id = $1', [clientId]);
 
-  let team = teams[Math.floor(Math.random() * teams.length)];
-  if (connectedUsers.length < 4) {
-    team = teams[connectedUsers.length];
-  }
+  console.log(playerIdExists.rows);
 
-  console.log("Assigning team", team.team);
+  var team, location;
 
   if (playerIdExists.rows.length === 0) {
-    await pool.query(`INSERT INTO players (id, color, x, y) VALUES ($1, $2, $3, $4)`, [clientId, team.team, team.home[0], team.home[1]]);
-  }
+    team = teams[Math.floor(Math.random() * teams.length)];
+    if (connectedUsers.length < 4) {
+      team = teams[connectedUsers.length];
+    }
 
-  if (!connectedUsers.some(user => user.clientId === clientId) && connectedUsers.length < 4) {
-    connectedUsers.push({ ws, clientId, teamColor: teams[connectedUsers.length].team, playerLocation: teams[connectedUsers.length].home });
-  } else if (connectedUsers.some(user => user.clientId === clientId)) {
-    connectedUsers.find(user => user.clientId === clientId).ws = ws;
-  }
+    console.log("Assigning team", team.team);
+    location = team.home;
 
-  ws.send(JSON.stringify({ type: 'player', data: { color: connectedUsers[connectedUsers.length - 1].teamColor, location: connectedUsers[connectedUsers.length - 1].playerLocation } }));
+    await pool.query(`INSERT INTO players (id, color, x, y) VALUES ($1, $2, $3, $4)`, [clientId, team.team, location[0], location[1]]);
+  } else {
+    team = playerIdExists.rows[0].color;
+    location = (playerIdExists.rows[0].x, playerIdExists.rows[0].y);
+  }
+  
+  ws.send(JSON.stringify({ type: 'player', data: { color: team, location: location } }));
 
   if (!allConnected && connectedUsers.length === 4) {
     console.log('All players are connected');
@@ -190,10 +192,10 @@ wss.on('connection', async (ws, req) => {
         `INSERT INTO messages (name, text${chatMsg.color ? `, color` : ''}) VALUES ($1, $2${chatMsg.color ? `, $3` : ''})`,
         chatMsg.color ? [chatMsg.name, chatMsg.text, chatMsg.color] : [chatMsg.name, chatMsg.text]
       );
-      chatMessages++;
-      if (chatMessages > 100) {
+      if (chatMessages < 100) {
+        chatMessages++;
+      } else {
         await pool.query('DELETE FROM messages ORDER BY timestamp ASC LIMIT 1');
-        chatMessages--;
       }
       wss.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {

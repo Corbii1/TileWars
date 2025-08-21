@@ -59,7 +59,6 @@ function sendMessage(message) {
   socket.send(message);
 }
 
-
 // --- Chat logic ---
 const chatMessagesDiv = document.getElementById('chat-messages');
 const chatForm = document.getElementById('chat-form');
@@ -197,8 +196,6 @@ let namebase = {
   ]
 }
 
-
-
 function getRandomUsername() {
   const prefix = namebase.prefixes[Math.floor(Math.random() * namebase.prefixes.length)];
   const suffix = namebase.suffixes[Math.floor(Math.random() * namebase.suffixes.length)];
@@ -299,7 +296,6 @@ function getAdjacentCells(row, col) {
   return adjacentCells;
 
 }
-
 
 function move(direction) {
 
