@@ -18,8 +18,7 @@ app.use(express.static("public"));
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 8080 });
 
-const connectedUsers = [];
-
+let connectedUsers = 0;
 let chatMessages = 0;
 
 const gridSize = 50;
@@ -141,26 +140,28 @@ wss.on('connection', async (ws, req) => {
 
   console.log(playerIdExists.rows);
 
-  var team, location;
+  var team, color, location;
 
   if (playerIdExists.rows.length === 0) {
     team = teams[Math.floor(Math.random() * teams.length)];
-    if (connectedUsers.length < 4) {
-      team = teams[connectedUsers.length];
+    if (connectedUsers < 4) {
+      team = teams[connectedUsers];
     }
 
-    console.log("Assigning team", team.team);
+    color = team.team;
+    console.log("Assigning team", color);
     location = team.home;
 
-    await pool.query(`INSERT INTO players (id, color, x, y) VALUES ($1, $2, $3, $4)`, [clientId, team.team, location[0], location[1]]);
+    await pool.query(`INSERT INTO players (id, color, x, y) VALUES ($1, $2, $3, $4)`, [clientId, color, location[0], location[1]]);
   } else {
     team = playerIdExists.rows[0].color;
-    location = (playerIdExists.rows[0].x, playerIdExists.rows[0].y);
+    location = [playerIdExists.rows[0].x, playerIdExists.rows[0].y];
   }
   
-  ws.send(JSON.stringify({ type: 'player', data: { color: team, location: location } }));
+  ws.send(JSON.stringify({ type: 'player', data: { color: color, location: location } }));
+  connectedUsers++;
 
-  if (!allConnected && connectedUsers.length === 4) {
+  if (!allConnected && connectedUsers >= 4) {
     console.log('All players are connected');
     allConnected = true;
     update();
@@ -180,8 +181,10 @@ wss.on('connection', async (ws, req) => {
       await pool.query('UPDATE board SET color = $1 WHERE x = $2 AND y = $3', [color, x, y]);
       await update();
     } else if (msg.type === 'move') {
-      const { x, y, color } = msg;
-      connectedUsers[connectedUsers.indexOf(connectedUsers.find(user => user.teamColor === color))].playerLocation = [x, y];
+      const { x, y, id } = msg;
+      console.log(msg);
+      await pool.query('UPDATE players SET x = $1, y = $2 WHERE id = $3', [x, y, id]);
+      //connectedUsers[connectedUsers.indexOf(connectedUsers.find(user => user.teamColor === color))].playerLocation = [x, y];
     } else if (msg.type === 'chat') {
       const chatMsg = {
         name: msg.name || 'Anonymous',
@@ -208,6 +211,7 @@ wss.on('connection', async (ws, req) => {
 
   ws.on('close', () => {
     console.log('Client disconnected', clientId);
+    connectedUsers--;
   });
 });
 

@@ -14,8 +14,8 @@ CREATE TABLE messages (
 );
 CREATE TABLE players (
 	id TEXT NOT NULL,
-	color VARCHAR(15) NOT NULL,
+	color VARCHAR(15),
 	x INT NOT NULL,
 	y INT NOT NULL,
-	alive BOOLEAN DEFAULT 1
+	alive BOOLEAN DEFAULT TRUE
 );

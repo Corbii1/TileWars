@@ -1,7 +1,8 @@
 let socket = null;
 let gridLoaded = false;
+let userId = null;
 window.addEventListener('load', () => {
-  let userId = document.cookie.replace(/(?:(?:^|.*;\s*)user_id\s*\=\s*([^;]*).*$)|^.*$/, '$1');
+  userId = document.cookie.replace(/(?:(?:^|.*;\s*)user_id\s*\=\s*([^;]*).*$)|^.*$/, '$1');
   if (!userId) {
     const username = getRandomUsername();
     document.cookie = `user_id=${username};`;
@@ -29,11 +30,9 @@ window.addEventListener('load', () => {
         }
       }
       gridLoaded = true;
-    }
-    else if (msg.type === 'chat') {
+    } else if (msg.type === 'chat') {
       addChatMessage(msg.data);
-    }
-    else if (msg.type === 'chatHistory') {
+    } else if (msg.type === 'chatHistory') {
       msg.data.forEach(addChatMessage);
     } else if (msg.type === 'player') {
       player = msg.data;
@@ -330,7 +329,7 @@ function move(direction) {
       type: 'move',
       x: parseInt(currentCell.dataset.row),
       y: parseInt(currentCell.dataset.col),
-      color: player.color
+      id: userId
     }));
   }
 }
