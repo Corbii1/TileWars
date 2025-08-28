@@ -1,22 +1,16 @@
-//DG964, FILE FOR SABOTAGES AND REWARDS
-//MODE BUTTON SETUP
-const modes = ["Sabotage", "Reward"];
-let currentModeIndex = 0;
-const modeButton = document.getElementById("modeButton");
-modeButton.textContent = `Mode: ${modes[currentModeIndex]}`;
-
+//DG964
 //TRACK LAST MOVE DIRECTION
 let lastDirection = 'down';
 document.addEventListener('keydown', (e) => {
     if (['w','a','s','d'].includes(e.key)) lastDirection = e.key;
 });
 
-//PAINT HELPER
+//PAINT CELL UTILITY AND NETWORK SYNC
 function paintCell(row, col, teamColor) {
     if (row < 0 || row >= gridSize || col < 0 || col >= gridSize) return;
     const cell = gridArray[row][col];
     cell.classList.remove('red','blue','green','yellow');
-    cell.classList.add(teamColor);
+    if (teamColor) cell.classList.add(teamColor);
     sendMessage(JSON.stringify({
         type: 'update',
         x: row,
@@ -25,10 +19,8 @@ function paintCell(row, col, teamColor) {
     }));
 }
 
-//SABOTAGE FUNCTIONS
+//SABOTAGE
 const sabotageFunctions = {
-
-    //CREATES 3 TILES OF USERS COLOR STEMMING FROM USERS SQUARE IN WHATEVER DIRECTION THEY LAST MOVES
     Strikethrough: (teamColor) => {
         if (!currentCell) return;
         let row = parseInt(currentCell.dataset.row);
@@ -48,7 +40,6 @@ const sabotageFunctions = {
         }
     },
 
-    //CREATES A LINE OF 5 TILES STEMMING FROM USERS CURRENT SQUARE, CHANGING DIRECTION TO FORM A WALL BASED ON USERS LAST MOVEMENT
     Blockade: (teamColor) => {
         if (!currentCell) return;
         let row = parseInt(currentCell.dataset.row);
@@ -57,18 +48,11 @@ const sabotageFunctions = {
         let delta = lastDirection === 'a' || lastDirection === 'd' ? 'vertical' : 'horizontal';
         let offsets = [-2,-1,1,2];
         offsets.forEach(o => {
-            if (delta === 'horizontal') {
-                let newCol = col + o;
-                paintCell(row, newCol, teamColor);
-            } 
-            else {
-                let newRow = row + o;
-                paintCell(newRow, col, teamColor);
-            }
+            if (delta === 'horizontal') paintCell(row, col + o, teamColor);
+            else paintCell(row + o, col, teamColor);
         });
     },
 
-    //CREATES A 3X3 TILE GRID OF USERS COLOR IN FRONT OF THEM, CANNOT OVERTAKE OTHER COLORS
     Patch: (teamColor) => {
         if (!currentCell) return;
         let row = parseInt(currentCell.dataset.row);
@@ -93,7 +77,6 @@ const sabotageFunctions = {
         });
     },
 
-    //WORKS LIKE PATCH, CHANGES COLOR OF ONLY OPPOSING SQUARES (NOT BLANK ONES) TO YOUR COLOR
     Convert: (teamColor) => {
         if (!currentCell) return;
         let row = parseInt(currentCell.dataset.row);
@@ -111,103 +94,138 @@ const sabotageFunctions = {
                 let newCol = col + cOff;
                 if ((newRow === row && newCol === col) || newRow < 0 || newRow >= gridSize || newCol < 0 || newCol >= gridSize) return;
                 const cell = gridArray[newRow][newCol];
-                if ((cell.classList.contains('red') || cell.classList.contains('blue') || cell.classList.contains('green') || cell.classList.contains('yellow')) && !cell.classList.contains(teamColor)) {
-                    paintCell(newRow, newCol, teamColor);
+                if ((cell.classList.contains('red') || cell.classList.contains('blue') || cell.classList.contains('green') || cell.classList.contains('yellow')) && !cell.classList.contains(player.color)) {
+                    paintCell(newRow, newCol, player.color);
                 }
-            });
-        });
-    },
-
-    //WORKS LIKE PATCH, CREATES A RANDOM ASSORTMENT OF COLORS IN A 3X3 GRID IN FRONT OF USER
-    Chaos: () => {
-        if (!currentCell) return;
-        let row = parseInt(currentCell.dataset.row);
-        let col = parseInt(currentCell.dataset.col);
-        const teamColors = ['red','blue','green','yellow'];
-        paintCell(row, col, teamColors[Math.floor(Math.random() * teamColors.length)]);
-        let rowOffsets = [-1,0,1];
-        let colOffsets = [-1,0,1];
-        if (lastDirection === 'w') rowOffsets = [-3,-2,-1];
-        if (lastDirection === 's') rowOffsets = [1,2,3];
-        if (lastDirection === 'a') colOffsets = [-3,-2,-1];
-        if (lastDirection === 'd') colOffsets = [1,2,3];
-        rowOffsets.forEach(rOff => {
-            colOffsets.forEach(cOff => {
-                let newRow = row + rOff;
-                let newCol = col + cOff;
-                if ((newRow === row && newCol === col) || newRow < 0 || newRow >= gridSize || newCol < 0 || newCol >= gridSize) return;
-                paintCell(newRow, newCol, teamColors[Math.floor(Math.random() * teamColors.length)]);
             });
         });
     }
 };
 
-//REWARD
-function grantReward(amount) {
-    tileBank = Math.min(tileBank + amount, tileBankMax);
-    updateTileBankUI();
-}
+//SABOTAGE NOTIFICATION ELEMENT SETUP
+const sabotageNotification = document.createElement("div");
+sabotageNotification.id = "sabotageNotification";
+sabotageNotification.style.position = "absolute";
+sabotageNotification.style.top = "30%";
+sabotageNotification.style.left = "20px";
+sabotageNotification.style.width = "150px";
+sabotageNotification.style.minHeight = "30px";
+sabotageNotification.style.background = "#fff3c0";
+sabotageNotification.style.border = "2px solid #ffa500";
+sabotageNotification.style.padding = "6px";
+sabotageNotification.style.fontSize = "14px";
+sabotageNotification.style.fontWeight = "bold";
+sabotageNotification.style.textAlign = "center";
+sabotageNotification.style.borderRadius = "6px";
+sabotageNotification.style.zIndex = "1000";
+sabotageNotification.style.display = "none";
+document.body.appendChild(sabotageNotification);
 
-//OPTIONS MENU SETUP
-const optionsMenu = document.createElement("div");
-optionsMenu.id = "optionsMenu";
-optionsMenu.style.position = "absolute";
-optionsMenu.style.top = "150px";
-optionsMenu.style.left = "20px";
-optionsMenu.style.background = "#ccc";
-optionsMenu.style.padding = "5px";
-optionsMenu.style.display = "flex";
-optionsMenu.style.flexDirection = "column";
-optionsMenu.style.gap = "2px";
-document.body.appendChild(optionsMenu);
-let currentOptionType = modes[currentModeIndex];
+//SABOTAGE STORAGE BOX SETUP
+const sabotageStorageBox = document.createElement("div");
+sabotageStorageBox.id = "sabotageStorageBox";
+sabotageStorageBox.style.position = "absolute";
+sabotageStorageBox.style.top = "50%";
+sabotageStorageBox.style.transform = "translateY(-50%)";
+sabotageStorageBox.style.left = "20px";
+sabotageStorageBox.style.width = "150px";
+sabotageStorageBox.style.minHeight = "120px";
+sabotageStorageBox.style.background = "#f0f0f0";
+sabotageStorageBox.style.border = "2px solid #444";
+sabotageStorageBox.style.padding = "6px";
+sabotageStorageBox.style.display = "flex";
+sabotageStorageBox.style.flexDirection = "column";
+sabotageStorageBox.style.gap = "6px";
+sabotageStorageBox.style.zIndex = "999";
+document.body.appendChild(sabotageStorageBox);
+const sabotageTitle = document.createElement("div");
+sabotageTitle.style.fontWeight = "bold";
+sabotageTitle.textContent = "Sabotages";
+sabotageStorageBox.appendChild(sabotageTitle);
+const sabotageListContainer = document.createElement("div");
+sabotageListContainer.id = "sabotageListContainer";
+sabotageListContainer.style.display = "flex";
+sabotageListContainer.style.flexDirection = "column";
+sabotageListContainer.style.gap = "4px";
+sabotageStorageBox.appendChild(sabotageListContainer);
+const sabotageList = ["Strikethrough","Blockade","Patch","Convert"];
+const sabotageCounts = {};
+sabotageList.forEach(s => sabotageCounts[s] = 0);
 let activeOption = null;
 
-//BUILD MENU FUNCTION
-function buildMenu(type) {
-    optionsMenu.innerHTML = "";
-    if (type === "Sabotage") {
-        ["Strikethrough","Blockade","Patch","Convert","Chaos"].forEach(name => {
-            const btn = document.createElement("button");
-            btn.textContent = name;
-            btn.onclick = () => {
-                activeOption = name;
-                Array.from(optionsMenu.children).forEach(b => b.style.fontWeight = "normal");
-                btn.style.fontWeight = "bold";
-            };
-            optionsMenu.appendChild(btn);
-        });
-    } 
-    else if (type === "Reward") {
-        const rewardOptions = [
-            { name: "+1", amount: 1 },
-            { name: "+3", amount: 3 },
-            { name: "+5", amount: 5 }];
-        rewardOptions.forEach(opt => {
-            const btn = document.createElement("button");
-            btn.textContent = opt.name;
-            btn.onclick = () => {
-                grantReward(opt.amount);
-            };
-            optionsMenu.appendChild(btn);
-        });
-    }
+//RENDER SABOTAGE STORAGE BUTTONS
+function renderSabotageStorage() {
+    sabotageListContainer.innerHTML = "";
+    sabotageList.forEach(name => {
+        const count = sabotageCounts[name] || 0;
+        const btn = document.createElement("button");
+        btn.style.display = "flex";
+        btn.style.justifyContent = "space-between";
+        btn.style.alignItems = "center";
+        btn.style.padding = "6px";
+        btn.style.fontSize = "13px";
+        btn.style.cursor = count > 0 ? "pointer" : "default";
+        btn.textContent = name;
+        const badge = document.createElement("span");
+        badge.textContent = count;
+        badge.style.marginLeft = "8px";
+        badge.style.fontWeight = "bold";
+        btn.appendChild(badge);
+        if (activeOption === name) {
+            btn.style.outline = "2px solid #0066ff";
+            btn.style.background = "#e6f0ff";
+            btn.style.fontWeight = "bold";
+        } 
+        else {
+            btn.style.outline = "none";
+            btn.style.background = "";
+            btn.style.fontWeight = "normal";
+        }
+        btn.onclick = () => {
+            if (count <= 0) return;
+            activeOption = name;
+            renderSabotageStorage();
+        };
+        sabotageListContainer.appendChild(btn);
+    });
+}
+renderSabotageStorage();
+
+//ADD SABOTAGE TO STORAGE
+function addSabotage(type, amount = 1) {
+    if (!sabotageCounts.hasOwnProperty(type)) return;
+    sabotageCounts[type] = (sabotageCounts[type] || 0) + amount;
+    renderSabotageStorage();
 }
 
-//INITIAL MENU
-buildMenu(currentOptionType);
-
-//MODE CHANGE, CLICK BUTTON
-modeButton.addEventListener("click", () => {
-    currentModeIndex = (currentModeIndex + 1) % modes.length;
-    modeButton.textContent = `Mode: ${modes[currentModeIndex]}`;
-    currentOptionType = modes[currentModeIndex];
-    buildMenu(currentOptionType);
-});
-
-//TRIGGER SABOTAGE, CLICK ON WHATEVER ONE YOU WANT, THEN PRESS E TO ACTIVATE
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'e' && currentOptionType === 'Sabotage' && activeOption) {
-        sabotageFunctions[activeOption](player.color);
+//RANDOMLY AWARD SABOTAGE
+function maybeAwardSabotage() {
+    const roll = Math.random();
+    if (roll < 0.5) {
+        sabotageNotification.textContent = "No sabotage won this time.";
+        sabotageNotification.style.display = "block";
+        setTimeout(() => sabotageNotification.style.display = "none", 2500);
+        return;
     }
+    const choice = sabotageList[Math.floor(Math.random() * sabotageList.length)];
+    addSabotage(choice, 1);
+    sabotageNotification.textContent = `You won a ${choice} sabotage!`;
+    sabotageNotification.style.display = "block";
+    setTimeout(() => sabotageNotification.style.display = "none", 2500);
+}
+
+//USE ACTIVE SABOTAGE
+function useActiveSabotage() {
+    if (!activeOption) return;
+    const count = sabotageCounts[activeOption] || 0;
+    if (count <= 0) return;
+    if (!sabotageFunctions[activeOption]) return;
+    if (!player || !player.color || !currentCell) return;
+    sabotageFunctions[activeOption](player.color);
+    sabotageCounts[activeOption] = Math.max(0, sabotageCounts[activeOption] - 1);
+    if (sabotageCounts[activeOption] <= 0) activeOption = null;
+    renderSabotageStorage();
+}
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'e') useActiveSabotage();
 });
