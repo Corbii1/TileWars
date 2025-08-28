@@ -93,7 +93,7 @@ function escapeHtml(text) {
 }
 
 var grid = document.getElementById('grid');
-let gridSize = 10;
+let gridSize = 50;
 var teams = [
   { team: 'red', home: [0, 0] },
   { team: 'blue', home: [0, gridSize - 1] },
@@ -227,7 +227,7 @@ document.addEventListener('keypress', (event) => {
             color: player.color
           }));
           currentCell.classList = 'cell ' + player.color;
-          tileBank = 5;
+          tileBank--;
           updateTileBankUI();
         }
         break;

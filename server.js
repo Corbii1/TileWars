@@ -22,7 +22,7 @@ const connectedUsers = new Map();
 let numConnected = 0;
 let chatMessages = 0;
 
-const gridSize = 10;
+const gridSize = 50;
 const teams = [
   { team: 'red', home: [0, 0] },
   { team: 'blue', home: [0, gridSize - 1] },
