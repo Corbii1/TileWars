@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/7a713f68-f04c-423d-ae1d-7cfc2d8b6d3b/resourceGroups/TileWars-rgiii/providers/Microsoft.Web/sites/TileWars",
+    "appService.deploySubpath": "."
+}
