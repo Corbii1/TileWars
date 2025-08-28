@@ -18,15 +18,17 @@ app.use(express.static("public"));
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 8080 });
 
-let connectedUsers = 0;
+const connectedUsers = new Map();
+
+let numConnected = 0;
 let chatMessages = 0;
 
-const gridSize = 50;
+const gridSize = 10;
 const teams = [
   { team: 'red', home: [0, 0] },
-  { team: 'blue', home: [0, 49] },
-  { team: 'green', home: [49, 0] },
-  { team: 'yellow', home: [49, 49] }
+  { team: 'blue', home: [0, gridSize - 1] },
+  { team: 'green', home: [gridSize - 1, 0] },
+  { team: 'yellow', home: [gridSize - 1, gridSize - 1] }
 ];
 
 async function initializeGrid() {
@@ -55,10 +57,11 @@ async function update() {
     if (group.color === 'gray') {
       for (const cell of group.cells) {
         await pool.query('UPDATE board SET color = $1 WHERE x = $2 AND y = $3', ['gray', cell.x, cell.y]);
-        if (connectedUsers.some(user => user.playerLocation[0] === cell.x && user.playerLocation[1] === cell.y)) {
-          //TODO mark player as eliminated
-          const user = connectedUsers.find(user => user.playerLocation[0] === cell.x && user.playerLocation[1] === cell.y);
-          user.ws.send(JSON.stringify({ type: 'eliminated' }));
+        checkEliminated = await pool.query('SELECT * FROM players WHERE x = $1 AND y = $2', [cell.x, cell.y]);
+        if (checkEliminated.rows.length > 0) {
+          await pool.query('UPDATE players SET alive = FALSE WHERE id = $1', [checkEliminated.rows[0].id]);
+          const user = connectedUsers.get(checkEliminated.rows[0].id);
+          user.send(JSON.stringify({ type: 'eliminated' }));
         }
       }
     }
@@ -139,28 +142,31 @@ wss.on('connection', async (ws, req) => {
 
   console.log(playerIdExists.rows);
 
-  var team, color, location;
+  var team, color, location, alive;
 
   if (playerIdExists.rows.length === 0) {
     team = teams[Math.floor(Math.random() * teams.length)];
-    if (connectedUsers < 4) {
-      team = teams[connectedUsers];
+    if (numConnected < 4) {
+      team = teams[numConnected];
     }
 
     color = team.team;
     console.log("Assigning team", color);
     location = team.home;
+    alive = true;
 
     await pool.query(`INSERT INTO players (id, color, x, y) VALUES ($1, $2, $3, $4)`, [clientId, color, location[0], location[1]]);
   } else {
     color = playerIdExists.rows[0].color;
     location = [playerIdExists.rows[0].x, playerIdExists.rows[0].y];
+    alive = playerIdExists.rows[0].alive;
   }
   
-  ws.send(JSON.stringify({ type: 'player', data: { color: color, location: location } }));
-  connectedUsers++;
+  connectedUsers.set(clientId, ws);
+  ws.send(JSON.stringify({ type: 'player', data: { color: color, location: location, alive: alive } }));
+  numConnected++;
 
-  if (!allConnected && connectedUsers >= 4) {
+  if (!allConnected && numConnected >= 4) {
     console.log('All players are connected');
     allConnected = true;
     update();
@@ -207,8 +213,9 @@ wss.on('connection', async (ws, req) => {
 
 
   ws.on('close', () => {
+    connectedUsers.delete(clientId);
     console.log('Client disconnected', clientId);
-    connectedUsers--;
+    numConnected--;
   });
 });
 

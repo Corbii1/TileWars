@@ -44,7 +44,7 @@ window.addEventListener('load', () => {
       currentCell.style.border = null;
       currentCell.style.boxShadow = null;
       currentCell = null;
-      isAlive = false;
+      player.alive = false;
     }
   };
 
@@ -93,12 +93,12 @@ function escapeHtml(text) {
 }
 
 var grid = document.getElementById('grid');
-let gridSize = 50;
+let gridSize = 10;
 var teams = [
   { team: 'red', home: [0, 0] },
-  { team: 'blue', home: [0, 49] },
-  { team: 'green', home: [49, 0] },
-  { team: 'yellow', home: [49, 49] }
+  { team: 'blue', home: [0, gridSize - 1] },
+  { team: 'green', home: [gridSize - 1, 0] },
+  { team: 'yellow', home: [gridSize - 1, gridSize - 1] }
 ];
 for (let i = 0; i < gridSize; i++) {
   let row = document.createElement('div');
@@ -116,7 +116,8 @@ let gridArray = Array.from(grid.children).map(row => Array.from(row.children));
 
 let player = {
   color: null,
-  location: []
+  location: [],
+  alive: true
 }
 
 let currentCell = null;
@@ -202,10 +203,8 @@ function getRandomUsername() {
   return `${prefix}_${suffix}${number}`;
 }
 
-let isAlive = true;
-
 document.addEventListener('keypress', (event) => {
-  if (gridLoaded && isAlive) {
+  if (gridLoaded && player.alive === true) {
     switch (event.key) {
       case 'w':
         move('up');
@@ -228,7 +227,7 @@ document.addEventListener('keypress', (event) => {
             color: player.color
           }));
           currentCell.classList = 'cell ' + player.color;
-          tileBank--;
+          tileBank = 5;
           updateTileBankUI();
         }
         break;
