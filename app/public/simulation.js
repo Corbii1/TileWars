@@ -71,7 +71,7 @@ function addChatMessage(msg) {
   const name = msg.name ? `<b style="color:${msg.color || '#888'}">${escapeHtml(msg.name)}</b>` : '<b>Anonymous</b>';
   const text = escapeHtml(msg.text);
   const div = document.createElement('div');
-  div.innerHTML = `<span style="color:#888">[${time}]</span> ${name}: ${text}`;
+  div.innerHTML = `<span style="color:#fff8">[${time}]</span> ${name}: ${text}`;
   chatMessagesDiv.appendChild(div);
   chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
 }

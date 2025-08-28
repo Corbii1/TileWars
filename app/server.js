@@ -114,7 +114,6 @@ function connectedCells(cells) {
       group.cells.forEach(c => c.color = 'gray')
     }
   }
-  //console.log(groups);
   return groups;
 }
 
@@ -182,9 +181,7 @@ wss.on('connection', async (ws, req) => {
       await update();
     } else if (msg.type === 'move') {
       const { x, y, id } = msg;
-      console.log(msg);
       await pool.query('UPDATE players SET x = $1, y = $2 WHERE id = $3', [x, y, id]);
-      //connectedUsers[connectedUsers.indexOf(connectedUsers.find(user => user.teamColor === color))].playerLocation = [x, y];
     } else if (msg.type === 'chat') {
       const chatMsg = {
         name: msg.name || 'Anonymous',

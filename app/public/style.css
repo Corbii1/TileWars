@@ -219,3 +219,32 @@ h1 {
     background-color: #4CAF50;
     color: white;
 }
+
+#chat-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #2226;
+    padding: 10px 0;
+    z-index: 1000;
+}
+
+#chat-messages { 
+    max-height: 150px;
+    overflow-y: auto;
+    /* background: #111; */
+    color: #fff;
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+#chat-form {
+    display: flex;
+    gap: 5px;
+    padding: 5px 10px;
+}
+
+#chat-input {
+    flex:1;
+}
