@@ -4,6 +4,7 @@ const app = express();
 
 const port = 3000;
 const hostname = "localhost";
+const index = '/public/index.html';
 
 const env = require("../env.json");
 const Pool = pg.Pool;
@@ -12,11 +13,9 @@ pool.connect().then(function () {
   console.log(`Connected to database ${env.database}`);
 });
 
-app.use(express.json());
-app.use(express.static("public"));
-
+var server = app.use((res) => res.sendFile(index, { root: __dirname })).listen(port, () => console.log(`Listening on port ${port}`));
 const WebSocket = require('ws');
-const wss = new WebSocket.Server({ port: 8080 });
+const wss = new WebSocket.Server({ server });
 
 const connectedUsers = new Map();
 

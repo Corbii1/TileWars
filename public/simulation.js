@@ -9,7 +9,7 @@ window.addEventListener('load', () => {
     userId = username;
   }
   console.log(userId);
-  socket = new WebSocket(`ws://localhost:8080?user_id=${userId}`);
+  socket = new WebSocket(`ws://tilewars-fcd2bgfgcpaubjex.scm.northcentralus-01.azurewebsites.net:8080?user_id=${userId}`);
 
   chatUser = userId;
 
