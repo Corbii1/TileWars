@@ -153,7 +153,7 @@ wss.on('connection', async (ws, req) => {
 
     await pool.query(`INSERT INTO players (id, color, x, y) VALUES ($1, $2, $3, $4)`, [clientId, color, location[0], location[1]]);
   } else {
-    team = playerIdExists.rows[0].color;
+    color = playerIdExists.rows[0].color;
     location = [playerIdExists.rows[0].x, playerIdExists.rows[0].y];
   }
   
