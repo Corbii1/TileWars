@@ -14,7 +14,6 @@ pool.connect().then(function () {
 
 app.use(express.json());
 app.use(express.static("public"));
-
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 8080 });
 
