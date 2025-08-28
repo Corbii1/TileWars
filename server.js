@@ -6,7 +6,7 @@ const port = 3000;
 const hostname = "localhost";
 const index = '/public/index.html';
 
-const env = require("../env.json");
+const env = require("./env.json");
 const Pool = pg.Pool;
 const pool = new Pool(env);
 pool.connect().then(function () {
