@@ -1,7 +1,8 @@
 let socket = null;
 let gridLoaded = false;
+let userId = null;
 window.addEventListener('load', () => {
-  let userId = document.cookie.replace(/(?:(?:^|.*;\s*)user_id\s*\=\s*([^;]*).*$)|^.*$/, '$1');
+  userId = document.cookie.replace(/(?:(?:^|.*;\s*)user_id\s*\=\s*([^;]*).*$)|^.*$/, '$1');
   if (!userId) {
     const username = getRandomUsername();
     document.cookie = `user_id=${username};`;
@@ -29,11 +30,9 @@ window.addEventListener('load', () => {
         }
       }
       gridLoaded = true;
-    }
-    else if (msg.type === 'chat') {
+    } else if (msg.type === 'chat') {
       addChatMessage(msg.data);
-    }
-    else if (msg.type === 'chatHistory') {
+    } else if (msg.type === 'chatHistory') {
       msg.data.forEach(addChatMessage);
     } else if (msg.type === 'player') {
       player = msg.data;
@@ -45,7 +44,7 @@ window.addEventListener('load', () => {
       currentCell.style.border = null;
       currentCell.style.boxShadow = null;
       currentCell = null;
-      isAlive = false;
+      player.alive = false;
     }
   };
 
@@ -58,7 +57,6 @@ window.addEventListener('load', () => {
 function sendMessage(message) {
   socket.send(message);
 }
-
 
 // --- Chat logic ---
 const chatMessagesDiv = document.getElementById('chat-messages');
@@ -73,7 +71,7 @@ function addChatMessage(msg) {
   const name = msg.name ? `<b style="color:${msg.color || '#888'}">${escapeHtml(msg.name)}</b>` : '<b>Anonymous</b>';
   const text = escapeHtml(msg.text);
   const div = document.createElement('div');
-  div.innerHTML = `<span style="color:#888">[${time}]</span> ${name}: ${text}`;
+  div.innerHTML = `<span style="color:#fffb">[${time}]</span> ${name}: ${text}`;
   chatMessagesDiv.appendChild(div);
   chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
 }
@@ -95,12 +93,12 @@ function escapeHtml(text) {
 }
 
 var grid = document.getElementById('grid');
-let gridSize = 50;
+let gridSize = 10;
 var teams = [
   { team: 'red', home: [0, 0] },
-  { team: 'blue', home: [0, 49] },
-  { team: 'green', home: [49, 0] },
-  { team: 'yellow', home: [49, 49] }
+  { team: 'blue', home: [0, gridSize - 1] },
+  { team: 'green', home: [gridSize - 1, 0] },
+  { team: 'yellow', home: [gridSize - 1, gridSize - 1] }
 ];
 for (let i = 0; i < gridSize; i++) {
   let row = document.createElement('div');
@@ -118,7 +116,8 @@ let gridArray = Array.from(grid.children).map(row => Array.from(row.children));
 
 let player = {
   color: null,
-  location: []
+  location: [],
+  alive: true
 }
 
 let currentCell = null;
@@ -197,8 +196,6 @@ let namebase = {
   ]
 }
 
-
-
 function getRandomUsername() {
   const prefix = namebase.prefixes[Math.floor(Math.random() * namebase.prefixes.length)];
   const suffix = namebase.suffixes[Math.floor(Math.random() * namebase.suffixes.length)];
@@ -206,10 +203,8 @@ function getRandomUsername() {
   return `${prefix}_${suffix}${number}`;
 }
 
-let isAlive = true;
-
 document.addEventListener('keypress', (event) => {
-  if (gridLoaded && isAlive) {
+  if (gridLoaded && player.alive === true) {
     switch (event.key) {
       case 'w':
         move('up');
@@ -232,25 +227,10 @@ document.addEventListener('keypress', (event) => {
             color: player.color
           }));
           currentCell.classList = 'cell ' + player.color;
-          tileBank--;
+          tileBank = 5;
           updateTileBankUI();
         }
         break;
-      case ' ':
-        // Switch team
-        let currentTeamIndex = teams.findIndex(team => team.team === player.color);
-        currentTeamIndex = (currentTeamIndex + 1) % teams.length;
-        player.color = teams[currentTeamIndex].team;
-        player.location[0] = teams[currentTeamIndex].team.home[0];
-        player.location[1] = teams[currentTeamIndex].team.home[1];
-        location = gridArray[player.location[0]][player.location[1]];
-        currentCell.style.border = null;
-        currentCell.style.boxShadow = null;
-        currentCell = location;
-        currentCell.style.border = "black 1px solid";
-        currentCell.style.boxShadow = "inset 0 0 0 1px black";
-        break;
-
     }
     updateHighlightedCells();
 
@@ -300,7 +280,6 @@ function getAdjacentCells(row, col) {
 
 }
 
-
 function move(direction) {
 
   let row = parseInt(currentCell.dataset.row);
@@ -334,7 +313,7 @@ function move(direction) {
       type: 'move',
       x: parseInt(currentCell.dataset.row),
       y: parseInt(currentCell.dataset.col),
-      color: player.color
+      id: userId
     }));
   }
 }

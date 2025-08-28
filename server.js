@@ -17,21 +17,23 @@ var server = app.use((res) => res.sendFile(index, { root: __dirname })).listen(p
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ server });
 
-const connectedUsers = [];
+const connectedUsers = new Map();
 
+let numConnected = 0;
 let chatMessages = 0;
 
-const gridSize = 50;
+const gridSize = 10;
 const teams = [
   { team: 'red', home: [0, 0] },
-  { team: 'blue', home: [0, 49] },
-  { team: 'green', home: [49, 0] },
-  { team: 'yellow', home: [49, 49] }
+  { team: 'blue', home: [0, gridSize - 1] },
+  { team: 'green', home: [gridSize - 1, 0] },
+  { team: 'yellow', home: [gridSize - 1, gridSize - 1] }
 ];
 
 async function initializeGrid() {
   await pool.query('DELETE FROM messages');
   await pool.query('DELETE FROM board');
+  await pool.query('DELETE FROM players');
 
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
@@ -54,10 +56,11 @@ async function update() {
     if (group.color === 'gray') {
       for (const cell of group.cells) {
         await pool.query('UPDATE board SET color = $1 WHERE x = $2 AND y = $3', ['gray', cell.x, cell.y]);
-        if (connectedUsers.some(user => user.playerLocation[0] === cell.x && user.playerLocation[1] === cell.y)) {
-          //TODO mark player as eliminated
-          const user = connectedUsers.find(user => user.playerLocation[0] === cell.x && user.playerLocation[1] === cell.y);
-          user.ws.send(JSON.stringify({ type: 'eliminated' }));
+        checkEliminated = await pool.query('SELECT * FROM players WHERE x = $1 AND y = $2', [cell.x, cell.y]);
+        if (checkEliminated.rows.length > 0) {
+          await pool.query('UPDATE players SET alive = FALSE WHERE id = $1', [checkEliminated.rows[0].id]);
+          const user = connectedUsers.get(checkEliminated.rows[0].id);
+          user.send(JSON.stringify({ type: 'eliminated' }));
         }
       }
     }
@@ -113,7 +116,6 @@ function connectedCells(cells) {
       group.cells.forEach(c => c.color = 'gray')
     }
   }
-  console.log(groups);
   return groups;
 }
 
@@ -135,21 +137,43 @@ wss.on('connection', async (ws, req) => {
   const clientId = req.url.split('user_id=')[1].split('&')[0];
   console.log('Client connected', clientId);
 
-  if (!connectedUsers.some(user => user.clientId === clientId) && connectedUsers.length < 4) {
-    connectedUsers.push({ ws, clientId, teamColor: teams[connectedUsers.length].team, playerLocation: teams[connectedUsers.length].home });
-  } else if (connectedUsers.some(user => user.clientId === clientId)) {
-    connectedUsers.find(user => user.clientId === clientId).ws = ws;
+  const playerIdExists = await pool.query('SELECT * FROM players WHERE id = $1', [clientId]);
+
+  console.log(playerIdExists.rows);
+
+  var team, color, location, alive;
+
+  if (playerIdExists.rows.length === 0) {
+    team = teams[Math.floor(Math.random() * teams.length)];
+    if (numConnected < 4) {
+      team = teams[numConnected];
+    }
+
+    color = team.team;
+    console.log("Assigning team", color);
+    location = team.home;
+    alive = true;
+
+    await pool.query(`INSERT INTO players (id, color, x, y) VALUES ($1, $2, $3, $4)`, [clientId, color, location[0], location[1]]);
+  } else {
+    color = playerIdExists.rows[0].color;
+    location = [playerIdExists.rows[0].x, playerIdExists.rows[0].y];
+    alive = playerIdExists.rows[0].alive;
   }
+  
+  connectedUsers.set(clientId, ws);
+  ws.send(JSON.stringify({ type: 'player', data: { color: color, location: location, alive: alive } }));
+  numConnected++;
 
-  ws.send(JSON.stringify({ type: 'player', data: { color: connectedUsers[connectedUsers.length - 1].teamColor, location: connectedUsers[connectedUsers.length - 1].playerLocation } }));
-
-  if (connectedUsers.length === 4 && !allConnected) {
+  if (!allConnected && numConnected >= 4) {
     console.log('All players are connected');
-    update();
     allConnected = true;
+    update();
+  } else if (allConnected) {
+    update();
   }
 
-  const res = await pool.query('SELECT * FROM messages ORDER BY timestamp DESC LIMIT 100');
+  const res = await pool.query('SELECT * FROM messages ORDER BY timestamp ASC LIMIT 100');
   chatMessages = res.rows.length;
   ws.send(JSON.stringify({ type: 'chatHistory', data: res.rows }));
 
@@ -161,8 +185,8 @@ wss.on('connection', async (ws, req) => {
       await pool.query('UPDATE board SET color = $1 WHERE x = $2 AND y = $3', [color, x, y]);
       await update();
     } else if (msg.type === 'move') {
-      const { x, y, color } = msg;
-      connectedUsers[connectedUsers.indexOf(connectedUsers.find(user => user.teamColor === color))].playerLocation = [x, y];
+      const { x, y, id } = msg;
+      await pool.query('UPDATE players SET x = $1, y = $2 WHERE id = $3', [x, y, id]);
     } else if (msg.type === 'chat') {
       const chatMsg = {
         name: msg.name || 'Anonymous',
@@ -173,10 +197,10 @@ wss.on('connection', async (ws, req) => {
         `INSERT INTO messages (name, text${chatMsg.color ? `, color` : ''}) VALUES ($1, $2${chatMsg.color ? `, $3` : ''})`,
         chatMsg.color ? [chatMsg.name, chatMsg.text, chatMsg.color] : [chatMsg.name, chatMsg.text]
       );
-      chatMessages++;
-      if (chatMessages > 100) {
+      if (chatMessages < 100) {
+        chatMessages++;
+      } else {
         await pool.query('DELETE FROM messages ORDER BY timestamp ASC LIMIT 1');
-        chatMessages--;
       }
       wss.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
@@ -188,7 +212,9 @@ wss.on('connection', async (ws, req) => {
 
 
   ws.on('close', () => {
+    connectedUsers.delete(clientId);
     console.log('Client disconnected', clientId);
+    numConnected--;
   });
 });
 
