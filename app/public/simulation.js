@@ -232,21 +232,6 @@ document.addEventListener('keypress', (event) => {
           updateTileBankUI();
         }
         break;
-      case ' ':
-        // Switch team
-        let currentTeamIndex = teams.findIndex(team => team.team === player.color);
-        currentTeamIndex = (currentTeamIndex + 1) % teams.length;
-        player.color = teams[currentTeamIndex].team;
-        player.location[0] = teams[currentTeamIndex].team.home[0];
-        player.location[1] = teams[currentTeamIndex].team.home[1];
-        location = gridArray[player.location[0]][player.location[1]];
-        currentCell.style.border = null;
-        currentCell.style.boxShadow = null;
-        currentCell = location;
-        currentCell.style.border = "black 1px solid";
-        currentCell.style.boxShadow = "inset 0 0 0 1px black";
-        break;
-
     }
     updateHighlightedCells();
 

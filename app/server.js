@@ -168,7 +168,7 @@ wss.on('connection', async (ws, req) => {
     update();
   }
 
-  const res = await pool.query('SELECT * FROM messages ORDER BY timestamp DESC LIMIT 100');
+  const res = await pool.query('SELECT * FROM messages ORDER BY timestamp ASC LIMIT 100');
   chatMessages = res.rows.length;
   ws.send(JSON.stringify({ type: 'chatHistory', data: res.rows }));
 
