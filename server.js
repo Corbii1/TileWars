@@ -10,15 +10,16 @@ app.get("/", (req, res) => {
 });
 
 const pool = new pg.Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASS,
-  port: process.env.DB_PORT
+  host: process.env.PGHOST,
+  user: process.env.PGUSER,
+  port: process.env.PGPORT,
+  database: process.env.PGDATABASE,
+  password: process.env.PGPASS,
+  ssl: { rejectUnauthorized: false }
 });
 
 pool.connect().then(() => {
-  console.log(`Connected to database ${process.env.DB_NAME}`);
+  console.log(`Connected to database ${process.env.PGDATABASE}`);
 });
 
 // Start server and attach WebSocket
