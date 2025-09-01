@@ -1,20 +1,28 @@
 const pg = require("pg");
 const express = require("express");
 const app = express();
+const WebSocket = require('ws');
 
-const port = 3000;
-const hostname = "localhost";
-const index = '/public/index.html';
+const port = process.env.PORT || 3000;
 
-const env = require("./env.json");
-const Pool = pg.Pool;
-const pool = new Pool(env);
-pool.connect().then(function () {
-  console.log(`Connected to database ${env.database}`);
+app.get("/", (req, res) => {
+  res.sendFile('/public/index.html', { root: __dirname });
 });
 
-var server = app.use((res) => res.sendFile(index, { root: __dirname })).listen(port, () => console.log(`Listening on port ${port}`));
-const WebSocket = require('ws');
+const pool = new pg.Pool({
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASS,
+  port: process.env.DB_PORT
+});
+
+pool.connect().then(() => {
+  console.log(`Connected to database ${process.env.DB_NAME}`);
+});
+
+// Start server and attach WebSocket
+const server = app.listen(port, () => console.log(`Listening on port ${port}`));
 const wss = new WebSocket.Server({ server });
 
 const connectedUsers = new Map();
@@ -218,10 +226,4 @@ wss.on('connection', async (ws, req) => {
   });
 });
 
-app.listen(port, hostname, () => {
-  console.log(`Listening at: http://${hostname}:${port}`);
-});
-
-
 initializeGrid();
-
