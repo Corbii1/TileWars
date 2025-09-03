@@ -9,6 +9,19 @@ app.get("/", (req, res) => {
   res.sendFile('/public/index.html', { root: __dirname });
 });
 
+app.get("/style.css", (req, res) => {
+  res.sendFile('/public/style.css', { root: __dirname });
+});
+app.get("/simulation.js", (req, res) => {
+  res.sendFile('/public/simulation.js', { root: __dirname });
+});
+app.get("/challenges.js", (req, res) => {
+  res.sendFile('/public/challenges.js', { root: __dirname });
+});
+app.get("/modes.js", (req, res) => {
+  res.sendFile('/public/modes.js', { root: __dirname });
+});
+
 const pool = new pg.Pool({
   host: process.env.PGHOST,
   user: process.env.PGUSER,
