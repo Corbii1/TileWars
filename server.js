@@ -31,6 +31,19 @@ const pool = new pg.Pool({
   ssl: { rejectUnauthorized: false }
 });
 
+const sql = fs.readFileSync("./setup.sql").toString();
+
+(async () => {
+  try {
+    await pool.query(sql);
+    console.log("Database initialized successfully");
+    process.exit(0);
+  } catch (err) {
+    console.error("Error initializing database:", err);
+    process.exit(1);
+  }
+})();
+
 pool.connect().then(() => {
   console.log(`Connected to database ${process.env.PGDATABASE}`);
 });
