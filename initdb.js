@@ -1,4 +1,4 @@
-const { Pool } = require("pg");
+const pg = require("pg");
 
 const sql = `CREATE TABLE IF NOT EXISTS board (
 	x INT NOT NULL,
