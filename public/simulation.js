@@ -47,9 +47,7 @@ window.addEventListener('load', () => {
       currentCell.style.boxShadow = null;
       currentCell = null;
       player.alive = false;
-    }
-    
-    if (msg.type === 'gameStart') {
+    } else if (msg.type === 'gameStart') {
       gameStartReceived = true;
       const waitingDiv = document.getElementById('waiting-players');
       if (waitingDiv) waitingDiv.remove();
@@ -57,10 +55,7 @@ window.addEventListener('load', () => {
         countdownStarted = true;
         startCountdown(); 
       }
-    }
-
-    
-    if (msg.type === 'gameBegin') {
+    } else if (msg.type === 'gameBegin') {
       gameStarted = true;
       gridLoaded = true;
       const startedDiv = document.createElement('div');
@@ -380,15 +375,4 @@ function startCountdown() {
       
     }
   }, 1000);
-}
-
-
-if (msg.type === 'gameBegin') {
-  gameStarted = true;
-  gridLoaded = true;
-  const startedDiv = document.createElement('div');
-  startedDiv.textContent = 'Game Started!';
-  startedDiv.className = 'game-started'; 
-  document.body.appendChild(startedDiv);
-  setTimeout(() => startedDiv.remove(), 2000);
 }
