@@ -31,36 +31,6 @@ const pool = new pg.Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-(async () => {
-  try {
-    await pool.query(`DROP DATABASE IF EXISTS tilewars;
-CREATE DATABASE tilewars;
-\c tilewars
-CREATE TABLE board (
-	x INT NOT NULL,
-	y INT NOT NULL,
-	color VARCHAR(15)
-);
-CREATE TABLE messages (
-	name TEXT NOT NULL,
-	text TEXT NOT NULL,
-	color VARCHAR(15) DEFAULT 'gray',
-	timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-CREATE TABLE players (
-	id TEXT NOT NULL,
-	color VARCHAR(15),
-	x INT NOT NULL,
-	y INT NOT NULL,
-	alive BOOLEAN DEFAULT TRUE
-);`);
-    console.log("Database initialized successfully");
-  } catch (err) {
-    console.error("Error initializing database:", err);
-    process.exit(1);
-  }
-})();
-
 pool.connect().then(() => {
   console.log(`Connected to database ${process.env.PGDATABASE}`);
 });
