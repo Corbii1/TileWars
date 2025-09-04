@@ -6,6 +6,7 @@
   },
   "scripts": {
     "start": "node server.js",
-    "setup": "psql -U postgres -f setup.sql"
+    "setup": "psql -U postgres -f setup.sql",
+    "initdb": "node initdb.js"
   }
 }
