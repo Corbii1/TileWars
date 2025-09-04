@@ -38,6 +38,7 @@ pool.connect().then(() => {
 // Start server and attach WebSocket
 const server = app.listen(port, () => console.log(`Listening on port ${port}`));
 const wss = new WebSocket.Server({ server });
+console.log('WebSocket server started at ' + server.address());
 
 const connectedUsers = new Map();
 
