@@ -2,7 +2,6 @@ const pg = require("pg");
 const express = require("express");
 const app = express();
 const WebSocket = require('ws');
-const fs = require("fs");
 
 const port = process.env.PORT || 3000;
 
@@ -32,13 +31,30 @@ const pool = new pg.Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-const sql = fs.readFileSync("./setup.sql").toString();
-
 (async () => {
   try {
-    await pool.query(sql);
+    await pool.query(`DROP DATABASE IF EXISTS tilewars;
+CREATE DATABASE tilewars;
+\c tilewars
+CREATE TABLE board (
+	x INT NOT NULL,
+	y INT NOT NULL,
+	color VARCHAR(15)
+);
+CREATE TABLE messages (
+	name TEXT NOT NULL,
+	text TEXT NOT NULL,
+	color VARCHAR(15) DEFAULT 'gray',
+	timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE players (
+	id TEXT NOT NULL,
+	color VARCHAR(15),
+	x INT NOT NULL,
+	y INT NOT NULL,
+	alive BOOLEAN DEFAULT TRUE
+);`);
     console.log("Database initialized successfully");
-    process.exit(0);
   } catch (err) {
     console.error("Error initializing database:", err);
     process.exit(1);
