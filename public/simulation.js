@@ -11,7 +11,7 @@ window.addEventListener('load', () => {
     userId = username;
   }
   console.log(userId);
-  socket = new WebSocket(`wss://https://tilewars-fcd2bgfgcpaubjex.northcentralus-01.azurewebsites.net?user_id=${userId}`);
+  socket = new WebSocket(`wss://tilewars-fcd2bgfgcpaubjex.northcentralus-01.azurewebsites.net?user_id=${userId}`);
 
   chatUser = userId;
 
