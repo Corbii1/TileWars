@@ -6,6 +6,26 @@
     <title>Tile Wars</title>
 </head>
 <body>
+    <!-- Add this to the top of your index.html body -->
+    <div id="main-menu" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+      <div style="background:#fff;padding:2em;border-radius:10px;max-width:400px;text-align:center;">
+        <h1>Welcome to TileWars!</h1>
+        <p>
+          TileWars is a team-based strategy game.<br>
+          Move around the grid, claim tiles for your team, and chat with other players.<br>
+          Every 3 seconds, you earn a tile (up to 5). Use tiles to claim territory.<br>
+          <br>
+          Controls:<br>
+          <b>WASD</b> to move<br>
+          <b>Q</b> to place a tile<br>
+          <b>Space</b> to switch team<br>
+          <br>
+          Work together to control the board!
+        </p>
+        <button id="start-game-btn" style="padding:0.5em 2em;font-size:1.2em;">Start / Join Game</button>
+      </div>
+    </div>
+
     <h1>Tile Wars</h1>
 
     <!-- Tile Bank and Timer UI -->

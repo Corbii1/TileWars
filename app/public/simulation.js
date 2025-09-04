@@ -1,5 +1,7 @@
 let socket = null;
 let gridLoaded = false;
+let gameStartReceived = false;
+let countdownStarted = false;
 window.addEventListener('load', () => {
   let userId = document.cookie.replace(/(?:(?:^|.*;\s*)user_id\s*\=\s*([^;]*).*$)|^.*$/, '$1');
   if (!userId) {
@@ -41,6 +43,27 @@ window.addEventListener('load', () => {
       updateHighlightedCells();
       currentCell.style.border = "black 1px solid";
       currentCell.style.boxShadow = "inset 0 0 0 1px black";
+    }
+    
+    if (msg.type === 'gameStart') {
+      gameStartReceived = true;
+      const waitingDiv = document.getElementById('waiting-players');
+      if (waitingDiv) waitingDiv.remove();
+      if (!countdownStarted) {
+        countdownStarted = true;
+        startCountdown(); 
+      }
+    }
+
+    
+    if (msg.type === 'gameBegin') {
+      gameStarted = true;
+      gridLoaded = true;
+      const startedDiv = document.createElement('div');
+      startedDiv.textContent = 'Game Started!';
+      startedDiv.className = 'game-started'; 
+      document.body.appendChild(startedDiv);
+      setTimeout(() => startedDiv.remove(), 2000);
     }
   };
 
@@ -273,7 +296,7 @@ function updateHighlightedCells() {
                 cell.style.animationDuration = '1s';
                 cell.style.animationIterationCount = 'infinite';
                 cell.style.animationName = 'highlight-animation';
-              }, 100); // Delay applied here
+              }, 100); 
               hcells.push(cell);
             }
           });
@@ -326,3 +349,53 @@ function move(direction) {
 }
 
 updateHighlightedCells();
+
+
+const mainMenu = document.getElementById('main-menu');
+const startGameBtn = document.getElementById('start-game-btn');
+
+startGameBtn.addEventListener('click', () => {
+  mainMenu.style.display = 'none';
+  let waitingDiv = document.createElement('div');
+  waitingDiv.id = 'waiting-players';
+  waitingDiv.textContent = 'Waiting for players...';
+  waitingDiv.className = 'waiting-players'; 
+  document.body.appendChild(waitingDiv);
+
+  
+  if (gameStartReceived) {
+    if (waitingDiv) waitingDiv.remove();
+  }
+});
+
+
+function startCountdown() {
+  console.log('Countdown started!');
+  let countdown = 5;
+  const countdownDiv = document.createElement('div');
+  countdownDiv.id = 'countdown-timer';
+  countdownDiv.className = 'countdown-timer'; 
+  countdownDiv.textContent = `Game starts in ${countdown}...`;
+  document.body.appendChild(countdownDiv);
+
+  const interval = setInterval(() => {
+    countdown--;
+    countdownDiv.textContent = `Game starts in ${countdown}...`;
+    if (countdown <= 0) {
+      clearInterval(interval);
+      countdownDiv.remove();
+      
+    }
+  }, 1000);
+}
+
+
+if (msg.type === 'gameBegin') {
+  gameStarted = true;
+  gridLoaded = true;
+  const startedDiv = document.createElement('div');
+  startedDiv.textContent = 'Game Started!';
+  startedDiv.className = 'game-started'; 
+  document.body.appendChild(startedDiv);
+  setTimeout(() => startedDiv.remove(), 2000);
+}
