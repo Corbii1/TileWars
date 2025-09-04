@@ -188,13 +188,50 @@ wss.on('connection', async (ws, req) => {
   ws.send(JSON.stringify({ type: 'player', data: { color: color, location: location, alive: alive } }));
   numConnected++;
 
-  if (!allConnected && numConnected >= 4) {
-    console.log('All players are connected');
-    allConnected = true;
-    update();
-  } else if (allConnected) {
-    update();
-  }
+  // Broadcast player count to all clients
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ type: 'playerCount', count: wss.clients.size }));
+      }
+    });
+  
+    // Always send gameStart to all clients if there are 4 or more
+    if (wss.clients.size >= 4) {
+      wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({ type: 'gameStart' }));
+        }
+      });
+  
+      // Start the actual game after countdown (5 seconds)
+      setTimeout(() => {
+        wss.clients.forEach(client => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ type: 'gameBegin' }));
+          }
+        });
+      }, 5000); // 5 seconds countdown
+  
+      // After sending gameBegin to all clients:
+      setTimeout(async () => {
+        // Place initial tiles for each team
+        for (const team of teams) {
+          await pool.query(
+            'UPDATE board SET color = $1 WHERE x = $2 AND y = $3',
+            [team.team, team.home[0], team.home[1]]
+          );
+        }
+        // Broadcast updated grid to all clients
+        update();
+  
+        // Send gameBegin to all clients
+        wss.clients.forEach(client => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ type: 'gameBegin' }));
+          }
+        });
+      }, 5000); // 5 seconds countdown
+    }
 
   const res = await pool.query('SELECT * FROM messages ORDER BY timestamp ASC LIMIT 100');
   chatMessages = res.rows.length;
